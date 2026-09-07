@@ -1,0 +1,84 @@
+import { User } from '../../models/User';
+import { Driver } from '../../models/Driver';
+import { ApiError } from '../../utils/ApiError';
+import { uploadToS3 } from '../../utils/s3';
+import type { UpdateProfileInput, UploadDocumentInput } from './users.validation';
+
+export async function getProfile(userId: string) {
+  const user = await User.findById(userId).lean();
+  if (!user) throw ApiError.notFound('User not found');
+
+  // Drivers carry an extra profile document; return it alongside so clients make one call.
+  if (user.role === 'driver') {
+    const driver = await Driver.findOne({ userId }).lean();
+    return { ...user, driver };
+  }
+
+  return user;
+}
+
+export async function updateProfile(userId: string, input: UpdateProfileInput) {
+  const user = await User.findById(userId);
+  if (!user) throw ApiError.notFound('User not found');
+
+  if (input.name !== undefined) user.name = input.name;
+  if (input.phone !== undefined) user.phone = input.phone;
+  await user.save();
+
+  if (input.vehicleClass !== undefined) {
+    if (user.role !== 'driver') {
+      throw ApiError.badRequest('vehicleClass can only be set on a driver profile');
+    }
+    await Driver.updateOne({ userId }, { $set: { vehicleClass: input.vehicleClass } });
+  }
+
+  return getProfile(userId);
+}
+
+export async function addDocument(userId: string, input: UploadDocumentInput) {
+  const driver = await Driver.findOne({ userId });
+  if (!driver) throw ApiError.notFound('Driver profile not found');
+
+  const url = await uploadToS3(userId, input);
+  driver.documents.push(url);
+  await driver.save();
+
+  // First document clears the registration hold placed on the account at signup.
+  const user = await User.findById(userId);
+  if (user && user.status === 'pending_documents') {
+    user.status = 'active';
+    await user.save();
+  }
+
+  return { documents: driver.documents, uploaded: url };
+}
+
+/* ----------------------------- favourite drivers -------------------------- */
+
+export async function addFavorite(userId: string, driverId: string) {
+  const driver = await Driver.findById(driverId).lean();
+  if (!driver) throw ApiError.notFound('Driver not found');
+
+  // $addToSet keeps the operation idempotent — favouriting twice is not an error.
+  await User.updateOne({ _id: userId }, { $addToSet: { favorites: driver._id } });
+  return listFavorites(userId);
+}
+
+export async function listFavorites(userId: string) {
+  const user = await User.findById(userId)
+    .populate({
+      path: 'favorites',
+      // Driver documents and penalty counts are internal — customers see the ride-relevant bits.
+      select: 'vehicleClass status rating userId',
+      populate: { path: 'userId', select: 'name' },
+    })
+    .lean();
+
+  if (!user) throw ApiError.notFound('User not found');
+  return user.favorites ?? [];
+}
+
+export async function removeFavorite(userId: string, driverId: string) {
+  await User.updateOne({ _id: userId }, { $pull: { favorites: driverId } });
+  return listFavorites(userId);
+}

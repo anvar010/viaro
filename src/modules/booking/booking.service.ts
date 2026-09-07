@@ -1,0 +1,281 @@
+import { Booking, type BookingDocument } from '../../models/Booking';
+import { Driver } from '../../models/Driver';
+import { Trip } from '../../models/Trip';
+import { ApiError } from '../../utils/ApiError';
+import type { AuthUser } from '../../middlewares/authGuard';
+import { format, now, toDate } from '../../config/timezone';
+import { paginated, toSkipLimit, type PaginationQuery } from '../../utils/pagination';
+import { logger } from '../../utils/logger';
+import * as pricingService from '../pricing/pricing.service';
+import * as vehicleService from '../vehicle/vehicle.service';
+import * as dispatchService from '../dispatch/dispatch.service';
+import { scheduleCancellationWindowCheck } from '../../jobs/cancellationWindow.job';
+import * as notify from '../notifications/notifications.service';
+import { NOTIFICATION_TYPES } from '../notifications/notifications.service';
+import type { CreateBookingInput, UpdateBookingInput } from './booking.validation';
+import { applyAmendment, assertChangeable } from './booking.amendments';
+import { recordBookingCancellation } from './booking.cancellation';
+import * as events from '../events/events.bus';
+
+export async function createBooking(customerId: string, input: CreateBookingInput) {
+  /*
+   * Checked against the catalogue before anything is priced or stored.
+   *
+   * `vehicleClass` is a free string on the schema and nothing validated it, so the API
+   * accepted any value: an unknown key was quietly billed at the base rate and saved as
+   * a booking no console could render and no chauffeur could ever be matched to. The
+   * canonical key is used from here on, so casing from the client cannot diverge from
+   * what the rest of the system looks up.
+   */
+  const vehicleClass = await vehicleService.resolveBookableClass(input.vehicleClass);
+
+  // Quote through the shared calculator so the estimate matches what pricing would charge.
+  const fare = await pricingService.calculateFare({
+    city: input.city,
+    tripType: input.tripType,
+    requestedAt: input.scheduledAt,
+    hours: input.hours,
+    customerId,
+    // The class the customer picked is priced here too, so the estimate they were
+    // shown and the estimatedFare stored on the booking cannot diverge.
+    vehicleClass,
+  });
+
+  const booking = await Booking.create({
+    customerId,
+    pickup: input.pickup,
+    drop: input.drop,
+    vehicleClass,
+    passengers: input.passengers,
+    tripType: input.tripType,
+    city: input.city,
+    // Every stored time goes through the shared PT helper — never `new Date()` (spec §8.1).
+    scheduledAt: input.scheduledAt ? toDate(input.scheduledAt) : toDate(now()),
+    flightDetails: input.flightDetails
+      ? {
+          flightNumber: input.flightDetails.flightNumber,
+          scheduledArrival: input.flightDetails.scheduledArrival
+            ? toDate(input.flightDetails.scheduledArrival)
+            : undefined,
+        }
+      : undefined,
+    favoriteDriverId: input.favoriteDriverId,
+    // Recorded, not spent — the debit happens when a Trip exists to spend it against.
+    walletCreditRequested: input.walletCreditRequested,
+    estimatedFare: fare.fare,
+    status: 'pending',
+  });
+
+  await notify.send(customerId, NOTIFICATION_TYPES.BOOKING_CREATED, {
+    message: `Booking confirmed for ${format(booking.scheduledAt)}`,
+    bookingId: String(booking._id),
+    scheduledAt: format(booking.scheduledAt),
+    estimatedFare: fare.fare,
+  });
+
+  // Warn the customer when their free-cancellation window is about to lapse (spec §1).
+  scheduleCancellationWindowCheck(String(booking._id), booking.scheduledAt, booking.tripType).catch(
+    (err) => logger.warn(`Could not arm cancellation window for booking ${String(booking._id)}`, err),
+  );
+
+  // The single cross-module wiring point (spec §4.4): dispatch takes over from here.
+  // Deliberately not awaited into the response path — a dispatch hiccup must not fail a
+  // booking the customer already paid attention to; it is logged and retryable instead.
+  dispatchService.receiveBookingRequest(String(booking._id)).catch((err) => {
+    logger.error(`Dispatch failed for booking ${String(booking._id)}`, err);
+  });
+
+  // Operations watches the pipeline; the passenger's own trip list is stale too.
+  events.publish({
+    topic: 'booking',
+    action: 'created',
+    id: String(booking._id),
+    roles: ['admin', 'company'],
+    userIds: [String(booking.customerId)],
+  });
+
+  return { booking, fareBreakdown: fare };
+}
+
+/**
+ * Spec §2 RBAC: customers may read only their own bookings; admin and company read any.
+ * Drivers have NO direct booking access — they receive pickup/drop through GET /trips/:id
+ * once assigned.
+ */
+export async function getBookingForUser(bookingId: string, user: AuthUser) {
+  const booking = await Booking.findById(bookingId)
+    .populate({ path: 'customerId', select: 'name phone' })
+    .lean();
+
+  if (!booking) throw ApiError.notFound('Booking not found');
+
+  if (user.role === 'customer') {
+    const ownerId = extractId(booking.customerId);
+    if (ownerId !== user.userId) throw ApiError.forbidden('This booking belongs to another customer');
+  }
+
+  return booking;
+}
+
+export async function updateBooking(bookingId: string, customerId: string, input: UpdateBookingInput) {
+  const booking = await loadOwnBooking(bookingId, customerId);
+
+  /*
+   * This used to refuse anything that was not 'pending', which made the feature almost
+   * unreachable: dispatch runs the moment a booking is created, so a booking is
+   * 'dispatched' within a second or two and the customer could never edit it.
+   *
+   * The real constraint is time, not dispatch state — a change is fine until a chauffeur
+   * is close enough to be inconvenienced. assertChangeable() owns that rule and the
+   * trip-level routes share it.
+   */
+  assertChangeable(booking);
+
+  let changed = false;
+  if (input.pickup) changed = applyAmendment(booking, 'pickup', input.pickup, 'customer') || changed;
+  if (input.drop) changed = applyAmendment(booking, 'drop', input.drop, 'customer') || changed;
+  if (input.vehicleClass) {
+    const next = await vehicleService.resolveBookableClass(input.vehicleClass);
+    changed = applyAmendment(booking, 'vehicleClass', next, 'customer') || changed;
+  }
+  if (input.scheduledAt) {
+    changed = applyAmendment(booking, 'scheduledAt', input.scheduledAt, 'customer') || changed;
+  }
+
+  /*
+   * Not an amendment: nothing has been spent yet, so there is no "from" worth recording
+   * in a trail whose job is to warn a chauffeur that the job moved. It is simply the
+   * latest answer to "put my credit towards this?", and 0 is a valid answer.
+   */
+  if (input.walletCreditRequested !== undefined) {
+    const next = input.walletCreditRequested;
+    if ((booking.walletCreditRequested ?? 0) !== next) {
+      booking.walletCreditRequested = next > 0 ? next : undefined;
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    await booking.save();
+    // The amendment banner on every console reads from this, and a chauffeur already
+    // driving to the old address is the reason it cannot wait for a poll.
+    events.publish({
+      topic: 'booking',
+      action: 'amended',
+      id: String(booking._id),
+      roles: ['admin', 'company', 'driver'],
+      userIds: [String(booking.customerId)],
+    });
+  }
+  return booking;
+}
+
+export async function cancelBookingByCustomer(
+  bookingId: string,
+  customerId: string,
+  /** Optional free text from the customer. Operations reads it; nothing branches on it. */
+  reason?: string,
+) {
+  const booking = await loadOwnBooking(bookingId, customerId);
+  if (booking.status === 'cancelled') throw ApiError.conflict('Booking is already cancelled');
+  if (booking.status === 'assigned') {
+    throw ApiError.conflict('A driver is already assigned — use the trip cancellation endpoints');
+  }
+
+  booking.status = 'cancelled';
+  // Before this, a booking cancelled at this stage carried no author and no reason at
+  // all — the console could only say that it had ended, not who ended it.
+  await recordBookingCancellation(booking, { by: 'customer', byUserId: customerId, reason });
+  await booking.save();
+
+  events.publish({
+    topic: 'booking',
+    action: 'cancelled',
+    id: String(booking._id),
+    roles: ['admin', 'company'],
+    userIds: [String(booking.customerId)],
+  });
+
+  return booking;
+}
+
+/** Spec §4.3 `<<extend>>`: request a favourite driver, if they are not already busy. */
+export async function requestFavoriteDriver(bookingId: string, customerId: string, driverId: string) {
+  const booking = await loadOwnBooking(bookingId, customerId);
+
+  if (booking.status !== 'pending') {
+    throw ApiError.conflict('A favourite driver can only be requested before dispatch');
+  }
+
+  const driver = await Driver.findById(driverId).lean();
+  if (!driver) throw ApiError.notFound('Driver not found');
+
+  if (driver.status !== 'available') {
+    // Explicit, machine-readable so the client can fall back to normal dispatch.
+    throw new ApiError(409, 'Favourite driver is not available right now', {
+      code: 'FAVORITE_DRIVER_BUSY',
+      driverStatus: driver.status,
+    });
+  }
+
+  booking.favoriteDriverId = driver._id;
+  await booking.save();
+  return booking;
+}
+
+export async function listMyRides(customerId: string, q: PaginationQuery) {
+  const { skip, limit } = toSkipLimit(q);
+  const [items, total] = await Promise.all([
+    Booking.find({ customerId }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    Booking.countDocuments({ customerId }),
+  ]);
+
+  return paginated(
+    items.map((b) => ({ ...b, scheduledAtLocal: format(b.scheduledAt) })),
+    total,
+    q,
+  );
+}
+
+/**
+ * JSON receipt (spec §4.3). PDF rendering is deliberately out of scope here — the reports
+ * module owns document generation.
+ */
+export async function getReceipt(bookingId: string, customerId: string) {
+  const booking = await loadOwnBooking(bookingId, customerId);
+  const trip = await Trip.findOne({ bookingId: booking._id }).lean();
+
+  const fare = trip?.fareAmount ?? booking.estimatedFare ?? 0;
+
+  return {
+    bookingId: booking._id,
+    tripId: trip?._id ?? null,
+    fare,
+    creditApplied: trip?.creditApplied ?? 0,
+    amountDue: Math.max(0, fare - (trip?.creditApplied ?? 0)),
+    tripType: booking.tripType,
+    date: format(booking.scheduledAt),
+    status: trip?.status ?? booking.status,
+    refund: trip?.cancellation?.refundPct
+      ? { refundPct: trip.cancellation.refundPct, refundedAt: trip.cancellation.refundedAt }
+      : null,
+  };
+}
+
+/* -------------------------------- helpers --------------------------------- */
+
+async function loadOwnBooking(bookingId: string, customerId: string): Promise<BookingDocument> {
+  const booking = await Booking.findById(bookingId);
+  if (!booking) throw ApiError.notFound('Booking not found');
+  if (String(booking.customerId) !== customerId) {
+    throw ApiError.forbidden('This booking belongs to another customer');
+  }
+  return booking;
+}
+
+function extractId(value: unknown): string {
+  if (value && typeof value === 'object' && '_id' in value) {
+    return String((value as { _id: unknown })._id);
+  }
+  return String(value);
+}
