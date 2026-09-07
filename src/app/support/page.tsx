@@ -1,0 +1,223 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Badge, Card, Kicker } from "@/components/ui/Surfaces";
+import { Button } from "@/components/ui/Button";
+import { ConsolePage, formatDateTime } from "@/components/ui/DataTable";
+import { listTickets, replyToTicket, setTicketStatus, type Ticket } from "@/lib/api/admin";
+import { ApiError } from "@/lib/api/client";
+
+/** Triage queue. Only an admin may move a ticket's state — the PATCH is admin-guarded. */
+const STATUSES = ["open", "pending", "resolved", "closed"] as const;
+const FILTERS = ["all", ...STATUSES] as const;
+
+const CATEGORY_LABEL: Record<string, string> = {
+  trip_dispute: "Trip dispute",
+  penalty_appeal: "Penalty appeal",
+  payment: "Payment",
+  account: "Account",
+  other: "Other",
+};
+
+const inputClass =
+  "w-full rounded-field border border-border bg-surface-raised px-3 py-2 text-note text-fg outline-none";
+
+export default function SupportPage() {
+  const [tickets, setTickets] = useState<Ticket[] | null>(null);
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
+  const [open, setOpen] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const page = await listTickets();
+      setTickets(Array.isArray(page) ? page : (page.items ?? []));
+      setError(null);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not load the queue");
+      setTickets([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const visible = useMemo(
+    () => (tickets ?? []).filter((t) => filter === "all" || t.status === filter),
+    [tickets, filter],
+  );
+
+  return (
+    <ConsolePage
+      title="Support queue"
+      description="Disputes and appeals from passengers and chauffeurs."
+      action={
+        <div className="flex gap-1 rounded-field bg-accent-soft p-1">
+          {FILTERS.map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setFilter(value)}
+              aria-pressed={filter === value}
+              className={`rounded-[0.5rem] px-3 py-1.5 text-label font-bold capitalize transition-colors ${
+                filter === value
+                  ? "bg-surface-raised text-fg"
+                  : "text-accent-strong hover:text-fg"
+              }`}
+            >
+              {value}
+            </button>
+          ))}
+        </div>
+      }
+    >
+      {error ? <p className="mb-4 text-note font-bold text-danger">{error}</p> : null}
+
+      <Card className="p-0">
+        {tickets === null ? (
+          <p className="p-6 text-note text-fg-muted">Loading…</p>
+        ) : visible.length === 0 ? (
+          <div className="p-10 text-center">
+            <p className="text-card font-bold text-fg">Nothing to triage</p>
+            <p className="mt-2 text-note text-fg-muted">No cases match that filter.</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-border-subtle">
+            {visible.map((ticket) => (
+              <li key={ticket._id}>
+                <button
+                  type="button"
+                  onClick={() => setOpen(open === ticket._id ? null : ticket._id)}
+                  className="flex w-full flex-wrap items-center gap-4 px-6 py-4 text-left transition-colors hover:bg-surface"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-meta font-bold text-fg">{ticket.subject}</p>
+                    <p className="mt-0.5 text-note text-fg-muted">
+                      {CATEGORY_LABEL[ticket.category] ?? ticket.category}
+                      {typeof ticket.userId === "object"
+                        ? ` · ${ticket.userId.name} (${ticket.userId.role})`
+                        : ""}{" "}
+                      · {formatDateTime(ticket.createdAt)}
+                    </p>
+                  </div>
+                  <Badge>{ticket.status}</Badge>
+                </button>
+
+                {open === ticket._id ? (
+                  <div className="border-t border-border-subtle bg-surface px-6 py-5">
+                    <ul className="space-y-4">
+                      {(ticket.messages ?? []).map((message, index) => (
+                        <li key={index}>
+                          <p className="text-label font-bold uppercase text-accent">
+                            {message.senderRole}
+                          </p>
+                          <p className="mt-1 whitespace-pre-wrap text-note leading-relaxed text-fg">
+                            {message.message}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="mt-5 space-y-4">
+                      <ReplyForm ticketId={ticket._id} onDone={load} />
+                      <StatusControl
+                        ticketId={ticket._id}
+                        current={ticket.status}
+                        onDone={load}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    </ConsolePage>
+  );
+}
+
+function ReplyForm({ ticketId, onDone }: { ticketId: string; onDone: () => void }) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <form
+      onSubmit={async (event) => {
+        event.preventDefault();
+        const form = new FormData(event.currentTarget);
+        setPending(true);
+        try {
+          await replyToTicket(ticketId, String(form.get("message")));
+          (event.target as HTMLFormElement).reset();
+          setError(null);
+          onDone();
+        } catch (err) {
+          setError(err instanceof ApiError ? err.message : "Could not send");
+        } finally {
+          setPending(false);
+        }
+      }}
+      className="space-y-3"
+    >
+      {error ? <p className="text-label text-danger">{error}</p> : null}
+      <textarea
+        name="message"
+        rows={3}
+        required
+        maxLength={4000}
+        placeholder="Reply to this case…"
+        className={inputClass}
+      />
+      <Button type="submit" variant="accent" block={false} disabled={pending}>
+        {pending ? "Sending…" : "Send reply"}
+      </Button>
+    </form>
+  );
+}
+
+function StatusControl({
+  ticketId,
+  current,
+  onDone,
+}: {
+  ticketId: string;
+  current: string;
+  onDone: () => void;
+}) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <div className="border-t border-border-subtle pt-4">
+      <Kicker>Move this case</Kicker>
+      {error ? <p className="mt-2 text-label text-danger">{error}</p> : null}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {STATUSES.filter((status) => status !== current).map((status) => (
+          <Button
+            key={status}
+            variant="secondary"
+            block={false}
+            disabled={pending}
+            className="capitalize"
+            onClick={async () => {
+              setPending(true);
+              try {
+                await setTicketStatus(ticketId, status);
+                setError(null);
+                onDone();
+              } catch (err) {
+                setError(err instanceof ApiError ? err.message : "Could not update");
+              } finally {
+                setPending(false);
+              }
+            }}
+          >
+            {status}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+}
