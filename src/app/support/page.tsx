@@ -24,19 +24,33 @@ export default function SupportPage() {
   const [open, setOpen] = useState<Ticket | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  /**
+   * `isCurrent` guards each setState against a stale response.
+   *
+   * These effects had no cancellation flag, so two loads in flight at once — a quick
+   * navigation, or a live update firing mid-fetch — could let the slower, older response
+   * land last and overwrite fresher data with nothing to stop it. The dashboard's own
+   * earnings-series effect in this same app already guards exactly this way.
+   */
+  const load = useCallback(async (isCurrent: () => boolean = () => true) => {
     try {
       const page = await listTickets();
+      if (!isCurrent()) return;
       setTickets(Array.isArray(page) ? page : (page.items ?? []));
       setError(null);
     } catch (err) {
+      if (!isCurrent()) return;
       setError(err instanceof ApiError ? err.message : "Could not load your cases");
       setTickets([]);
     }
   }, []);
 
   useEffect(() => {
-    void load();
+    let cancelled = false;
+    void load(() => !cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
   return (
@@ -50,7 +64,7 @@ export default function SupportPage() {
 
       {error ? <p className="mt-4 text-note font-bold text-danger">{error}</p> : null}
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
+      <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
         <Card className="p-0">
           <div className="px-6 pt-6">
             <Kicker>Your cases</Kicker>

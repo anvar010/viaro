@@ -162,6 +162,16 @@ export function useLiveChanges(
         if (stopped || controller.signal.aborted) return;
 
         failures += 1;
+        /*
+         * Previously discarded entirely, so a stream that could never connect looked
+         * identical to a quiet one and the app silently degraded to polling with nothing
+         * to diagnose from.
+         */
+        console.warn(
+          `[live] connection attempt ${failures} failed; ` +
+            (failures >= GIVE_UP_AFTER ? "falling back to polling" : "retrying"),
+          err,
+        );
         if (failures >= GIVE_UP_AFTER) startPolling();
 
         const wait = Math.min(RECONNECT_MIN_MS * 2 ** (failures - 1), RECONNECT_MAX_MS);

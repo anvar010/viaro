@@ -30,17 +30,29 @@ export function TripDetail({ id }: { id: string }) {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  /**
+   * Keyed by `id`, so this is the effect where a stale response actually shows the wrong
+   * record: navigating from one trip to another let a slower first request resolve after
+   * the second and render the previous trip under the new URL.
+   */
+  const load = useCallback(async (isCurrent: () => boolean = () => true) => {
     try {
-      setTrip(await getTrip(id));
+      const result = await getTrip(id);
+      if (!isCurrent()) return;
+      setTrip(result);
       setError(null);
     } catch (err) {
+      if (!isCurrent()) return;
       setError(err instanceof ApiError ? err.message : "Could not load this trip");
     }
   }, [id]);
 
   useEffect(() => {
-    void load();
+    let cancelled = false;
+    void load(() => !cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
   const booking = trip?.booking;
@@ -69,7 +81,7 @@ export function TripDetail({ id }: { id: string }) {
         </div>
       ) : null}
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
+      <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
         <div className="space-y-4">
           <Card className="p-5">
             <Kicker>Journey</Kicker>

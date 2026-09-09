@@ -46,7 +46,16 @@ export function SignInForm() {
         required
       />
 
-      {error && <p className="text-link font-bold text-danger">{error}</p>}
+      {/*
+        * role="alert" (an assertive live region) so a screen reader announces a failed
+        * sign-in. As a plain paragraph the message appeared silently: a user who could not
+        * see it got no feedback at all that the attempt had been rejected.
+        */}
+      {error && (
+        <p role="alert" className="text-link font-bold text-danger">
+          {error}
+        </p>
+      )}
 
       <Button type="submit" variant="accent" loading={submitting}>
         Sign in

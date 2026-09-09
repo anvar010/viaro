@@ -73,9 +73,19 @@ export default function RequestsPage() {
   const [claimed, setClaimed] = useState<Claimed | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  /**
+   * `isCurrent` guards each setState against a stale response.
+   *
+   * These effects had no cancellation flag, so two loads in flight at once — a quick
+   * navigation, or a live update firing mid-fetch — could let the slower, older response
+   * land last and overwrite fresher data with nothing to stop it. The dashboard's own
+   * earnings-series effect in this same app already guards exactly this way.
+   */
+  const load = useCallback(async (isCurrent: () => boolean = () => true) => {
     try {
       const pool = await getDispatchPool();
+      if (!isCurrent()) return;
+
       const items = Array.isArray(pool) ? pool : (pool.items ?? []);
       // Soonest first: the pool arrives in creation order, which is not the order a
       // chauffeur cares about.
@@ -84,13 +94,18 @@ export default function RequestsPage() {
       );
       setError(null);
     } catch (err) {
+      if (!isCurrent()) return;
       setError(err instanceof ApiError ? err.message : "Could not load the pool");
       setEntries([]);
     }
   }, []);
 
   useEffect(() => {
-    void load();
+    let cancelled = false;
+    void load(() => !cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
   /*

@@ -127,7 +127,12 @@ export default function DriverDashboard() {
   const [series, setSeries] = useState<EarningsPayoutReport | null>(null);
   const [seriesLoading, setSeriesLoading] = useState(true);
 
-  const load = useCallback(async () => {
+  /**
+   * Guarded the same way the earnings-series effect below already is — this one was the
+   * outlier, and it is refetched by live updates, which is precisely when two loads can
+   * be in flight at once.
+   */
+  const load = useCallback(async (isCurrent: () => boolean = () => true) => {
     // Each tile has its own source; one failing must not blank the whole page.
     const [me, myTrips, todayPay, weekPay, monthPay, allPay, todayDone, poolRes, cancelRes] =
       await Promise.allSettled([
@@ -141,6 +146,8 @@ export default function DriverDashboard() {
         getDispatchPool(),
         getCancellations(),
       ]);
+
+    if (!isCurrent()) return;
 
     if (me.status === "fulfilled") {
       setDriver(me.value.driver);
@@ -168,7 +175,11 @@ export default function DriverDashboard() {
   }, []);
 
   useEffect(() => {
-    void load();
+    let cancelled = false;
+    void load(() => !cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
   useEffect(() => {

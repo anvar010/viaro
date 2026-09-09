@@ -52,7 +52,7 @@ export default function DocumentsPage() {
 
       {error ? <p className="mt-4 text-note font-bold text-danger">{error}</p> : null}
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
+      <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
         <div className="space-y-4">
           <Card className="p-0">
             <div className="px-6 pt-6">

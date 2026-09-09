@@ -88,19 +88,33 @@ export default function SchedulePage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  /**
+   * `isCurrent` guards each setState against a stale response.
+   *
+   * These effects had no cancellation flag, so two loads in flight at once — a quick
+   * navigation, or a live update firing mid-fetch — could let the slower, older response
+   * land last and overwrite fresher data with nothing to stop it. The dashboard's own
+   * earnings-series effect in this same app already guards exactly this way.
+   */
+  const load = useCallback(async (isCurrent: () => boolean = () => true) => {
     try {
       const page = await listMyTrips({ limit: 100 });
+      if (!isCurrent()) return;
       setTrips(page.items ?? []);
       setError(null);
     } catch (err) {
+      if (!isCurrent()) return;
       setError(err instanceof ApiError ? err.message : "Could not load your schedule");
       setTrips([]);
     }
   }, []);
 
   useEffect(() => {
-    void load();
+    let cancelled = false;
+    void load(() => !cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
   // A passenger changing the pickup, or dispatch assigning a new job.

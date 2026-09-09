@@ -1,10 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Badge, Card, Kicker, WarnBox } from "@/components/ui/Surfaces";
 import { Button, buttonClass } from "@/components/ui/Button";
-import { applyAsDriver, getMyDriver, type DriverProfile } from "@/lib/api/driver";
+import {
+  applyAsDriver,
+  getMyDriver,
+  listVehicleClasses,
+  type DriverProfile,
+  type VehicleClassInfo,
+} from "@/lib/api/driver";
 import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
 
@@ -23,6 +29,7 @@ const inputClass =
 export default function ApplyPage() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<DriverProfile | null>(null);
+  const [classes, setClasses] = useState<VehicleClassInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(
@@ -36,6 +43,19 @@ export default function ApplyPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // The catalogue supplies the human label for the driver's vehicle class.
+  useEffect(() => {
+    listVehicleClasses()
+      .then(setClasses)
+      .catch(() => undefined);
+  }, []);
+
+  const labelFor = useMemo(() => {
+    const byValue = new Map(classes.map((c) => [c.value, c.label]));
+    // Falls back to the raw value so the row still renders before the catalogue loads.
+    return (value?: string) => (value ? (byValue.get(value) ?? value) : "");
+  }, [classes]);
 
   const pending = user?.status === "pending_documents";
   const documents = profile?.driver.documents ?? [];
@@ -51,7 +71,7 @@ export default function ApplyPage() {
 
       {error ? <p className="mt-4 text-note font-bold text-danger">{error}</p> : null}
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-start">
+      <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-start">
         <div className="space-y-4">
           <Card className="p-5">
             <div className="flex flex-wrap items-center gap-3">
@@ -70,8 +90,15 @@ export default function ApplyPage() {
             <dl className="mt-5 space-y-2 border-t border-border-subtle pt-4 text-meta">
               <div className="flex justify-between gap-4">
                 <dt className="text-fg-muted">Vehicle class</dt>
-                <dd className="font-bold capitalize text-fg">
-                  {profile?.driver.vehicleClass ?? "—"}
+                {/*
+                  * The catalogue label, not a CSS-capitalised enum.
+                  *
+                  * `capitalize` on the raw value rendered "suv" as "Suv"; the requests and
+                  * schedule screens already look the value up and correctly show
+                  * "Business SUV".
+                  */}
+                <dd className="font-bold text-fg">
+                  {labelFor(profile?.driver.vehicleClass) || "—"}
                 </dd>
               </div>
               <div className="flex justify-between gap-4">

@@ -12,7 +12,7 @@ npm install
 npm run dev     # http://localhost:3001  (the customer app uses 3000)
 ```
 
-Needs `viaro-backend` running on `:5000` — see `.env.local`.
+Needs `viaro-backend` running on `:5001` — see `.env.local`.
 
 ---
 
@@ -32,28 +32,27 @@ projects.
 
 ---
 
-## Status: 1 of 7 screens built
+## Status: 7 of 7 screens built
 
 | # | Screen | Frame | Route | State |
 |---|---|---|---|---|
 | 14 | Dashboard | `57:5099` | `/` | ✅ built |
-| 15 | Requests and pool | `57:5207` | `/requests` | ⬜ stub |
-| 16 | Trip detail | `57:5310` | `/trips/[id]` | ⬜ not routed yet |
-| 17 | Schedule | `57:5420` | `/schedule` | ⬜ stub |
-| 18 | Earnings | `57:5517` | `/earnings` | ⬜ stub |
-| 19 | Documents | `57:5650` | `/documents` | ⬜ stub |
-| 20 | Support and appeals | `57:5747` | `/support` | ⬜ stub |
+| 15 | Requests and pool | `57:5207` | `/requests` | ✅ built |
+| 16 | Trip detail | `57:5310` | `/trips/[id]` | ✅ built |
+| 17 | Schedule | `57:5420` | `/schedule` | ✅ built |
+| 18 | Earnings | `57:5517` | `/earnings` | ✅ built |
+| 19 | Documents | `57:5650` | `/documents` | ✅ built |
+| 20 | Support and appeals | `57:5747` | `/support` | ✅ built |
 
-Each stub names its frame and its endpoints, so the next session starts without
-re-deriving anything.
+There is also an `/apply` screen for a chauffeur whose documents are still pending.
 
 ### The shell
 
 Six of the seven frames are exactly **1280×786** — this is a fixed app shell, not a
-scrolling page. `components/layout/PortalShell.tsx` implements it: a 230px rail, a 66px
-top bar and the body. The rail keeps its 230px and the body takes the remaining width,
-so the layout holds above 1280 rather than leaving a gap, and collapses to a bottom nav
-below `lg`. **Build the remaining six as body content — the chrome is done.**
+scrolling page. `components/layout/PortalShell.tsx` implements it: a 248px rail (72px
+when collapsed), a 68px top bar and the body. The rail keeps its width and the body takes
+the remainder, so the layout holds above 1280 rather than leaving a gap. Below `lg` the
+rail becomes a slide-out drawer opened from the top bar — not a bottom nav.
 
 ### Sign-in
 
@@ -72,7 +71,7 @@ every request 403s.
 | `PATCH /drivers/me/status` | the Online/Offline switch |
 | `GET /reports/earnings-payout` | Dashboard earnings tiles |
 | `GET /reports/trips-completed` | Dashboard trip counts |
-| `GET /admin/dispatch/pool` | Dashboard open-requests count |
+| `GET /dispatch/pool` | Dashboard open-requests count (the `/admin/` variant is operations-only) |
 | `GET /trips` | Dashboard schedule table |
 | `POST /api/auth/login` → `/auth/login` | sign-in |
 

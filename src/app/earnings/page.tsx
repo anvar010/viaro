@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, Kicker, WarnBox } from "@/components/ui/Surfaces";
 import { Button } from "@/components/ui/Button";
 import {
@@ -39,33 +39,41 @@ export default function EarningsPage() {
   const [wallet, setWallet] = useState<WalletPage | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Extracted from the effect so a successful withdrawal can re-run it.
+   *
+   * A withdrawal genuinely moved the money, but nothing on this screen re-fetched: the
+   * balance, the lifetime-credited figure and the payout table all kept showing
+   * pre-withdrawal numbers until a manual reload. The support and document-upload forms
+   * on this app already take an `onDone` reload callback; the withdrawal form did not.
+   */
+  const load = useCallback(async (isCurrent: () => boolean = () => true) => {
+    const [w, t, a, tc, cp, wl] = await Promise.allSettled([
+      getEarningsPayout(weekRange()),
+      getEarningsPayout(todayRange()),
+      getEarningsPayout(),
+      getTripsCompleted(weekRange()),
+      getCancellations(),
+      getMyWallet(1, 30),
+    ]);
+    if (!isCurrent()) return;
+
+    if (w.status === "fulfilled") setWeek(w.value);
+    if (t.status === "fulfilled") setToday(t.value);
+    if (a.status === "fulfilled") setAllTime(a.value);
+    if (tc.status === "fulfilled") setTrips(tc.value);
+    if (cp.status === "fulfilled") setPenalties(cp.value);
+    if (wl.status === "fulfilled") setWallet(wl.value);
+    setError(a.status === "rejected" ? "Could not load your earnings." : null);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
-
-    (async () => {
-      const [w, t, a, tc, cp, wl] = await Promise.allSettled([
-        getEarningsPayout(weekRange()),
-        getEarningsPayout(todayRange()),
-        getEarningsPayout(),
-        getTripsCompleted(weekRange()),
-        getCancellations(),
-        getMyWallet(1, 30),
-      ]);
-      if (cancelled) return;
-
-      if (w.status === "fulfilled") setWeek(w.value);
-      if (t.status === "fulfilled") setToday(t.value);
-      if (a.status === "fulfilled") setAllTime(a.value);
-      if (tc.status === "fulfilled") setTrips(tc.value);
-      if (cp.status === "fulfilled") setPenalties(cp.value);
-      if (wl.status === "fulfilled") setWallet(wl.value);
-      if (a.status === "rejected") setError("Could not load your earnings.");
-    })();
-
+    void load(() => !cancelled);
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [load]);
 
   const weekCount = trips?.count ?? 0;
   const weekTotal = week?.totalCredited ?? 0;
@@ -106,7 +114,17 @@ export default function EarningsPage() {
         </Card>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
+      {/*
+        * `grid-cols-[minmax(0,1fr)]` below lg is load-bearing, not cosmetic.
+        *
+        * Without an explicit single-column track the implicit one is `auto`, whose
+        * min-width resolves to the content's intrinsic width — and the payout table
+        * inside carries `min-w-[30rem]`. That blew the whole page out to 498px on a 375px
+        * viewport (a driver with no payouts saw no overflow, which is what pinned it to
+        * this table). `minmax(0,...)` lets the track shrink so only the table's own
+        * overflow-x-auto wrapper scrolls.
+        */}
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
         <Card className="p-0">
           <div className="px-6 pt-6">
             <Kicker>Payout history</Kicker>
@@ -163,7 +181,7 @@ export default function EarningsPage() {
               {money(wallet?.balance ?? week?.balance ?? 0)}
             </p>
             <div className="mt-5">
-              <WithdrawForm balance={wallet?.balance ?? 0} />
+              <WithdrawForm balance={wallet?.balance ?? 0} onDone={() => void load()} />
             </div>
           </Card>
 
@@ -202,7 +220,7 @@ export default function EarningsPage() {
   );
 }
 
-function WithdrawForm({ balance }: { balance: number }) {
+function WithdrawForm({ balance, onDone }: { balance: number; onDone: () => void }) {
   const [amount, setAmount] = useState("");
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<{ error?: string; done?: boolean }>({});
@@ -222,6 +240,8 @@ function WithdrawForm({ balance }: { balance: number }) {
         try {
           await withdraw(value);
           setState({ done: true });
+          // The balance, lifetime total and payout history all just changed.
+          onDone();
         } catch (err) {
           setState({
             error: err instanceof ApiError ? err.message : "Could not withdraw",
