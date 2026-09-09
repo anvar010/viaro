@@ -658,10 +658,21 @@ const SidebarMenuSkeleton = React.forwardRef<
     showIcon?: boolean
   }
 >(({ className, showIcon = false, ...props }, ref) => {
-  // Random width between 50 to 90%.
+  /*
+   * Deterministic width, not Math.random().
+   *
+   * This is a "use client" component, so a random value picked during render differs
+   * between the server-rendered HTML and the client's first render — a hydration mismatch
+   * every time a skeleton is shown. The varied widths only exist to stop a stack of
+   * placeholders looking mechanical, so a stable per-instance value does the same job
+   * without the bug. `useId` is stable across server and client by design.
+   */
+  const id = React.useId()
   const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`
-  }, [])
+    let hash = 0
+    for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) | 0
+    return `${(Math.abs(hash) % 40) + 50}%`
+  }, [id])
 
   return (
     <div

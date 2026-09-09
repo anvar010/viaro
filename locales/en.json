@@ -525,7 +525,7 @@
           "img": "/images/ImagenCorporate.png",
           "title": "Corporate Transportation & Executive Car Service",
           "desc": "Turn your commute into productive time.\n\nOur executive chauffeurs pass background checks, drug screening, and professional training — no gig workers. We handle multi-city roadshows, board meetings, and investor days.\n\nCorporate accounts include Net-30 monthly invoicing, privacy partitions, and NDA-compliant drivers for high-profile clients.",
-          "href": "corporate-transportation-executive-car-service"
+          "href": "corporate-transportation"
         },
         {
           "img": "/images/ImagenCruise.png",
@@ -646,7 +646,7 @@
         }
       ],
       "disclaimer": "Because our vehicles are in high demand, the exact make and model available will depend on your specific booking time and service area. Contact our team for specific vehicle requests.",
-  "guarantee": "We always guarantee the premium vehicle class you select — spotless, comfortable, and ready to get you to your <a href='/en/black-car-service/airport-transfers' class='text-primary font-bold hover:underline'>airport transfer</a>, <a href='/en/black-car-service/cruise-port-transfers/' class='text-primary font-bold hover:underline'>cruise</a> or <a href='/en/black-car-service/hourly-chauffeur-hire/' class='text-primary font-bold hover:underline'>appointment</a> safely.",
+  "guarantee": "We always guarantee the premium vehicle class you select — spotless, comfortable, and ready to get you to your <a href='/black-car-service/airport-transfers' class='text-primary font-bold hover:underline'>airport transfer</a>, <a href='/black-car-service/cruise-port-transfers/' class='text-primary font-bold hover:underline'>cruise</a> or <a href='/black-car-service/hourly-chauffeur-hire/' class='text-primary font-bold hover:underline'>appointment</a> safely.",
       "cta": "Choose Your Vehicle and Book Today"
     },
 

@@ -168,6 +168,13 @@ export async function useCreditAction(
   if (!(amount > 0)) return { fieldErrors: { amount: "Enter an amount above zero" } };
 
   try {
+    /*
+     * Not a React hook, despite the name: `useCredit` is the POST /wallet/use-credit
+     * wrapper in lib/api/wallet.ts, named after the endpoint. The rules-of-hooks lint
+     * rule matches on the `use` prefix alone and cannot tell the difference, and this
+     * file is a server action with no React render to violate.
+     */
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await useCredit(tripId, amount);
   } catch (err) {
     return toFormState(err);

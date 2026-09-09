@@ -89,7 +89,12 @@ function ServiceCard({
           {s.desc}
         </p>
         <a
-          href={`/service/${s.href}`}
+          /*
+           * `/black-car-service/` (singular, no `/service/` prefix) is the real route —
+           * app/black-car-service/[id]. There has never been a `/service/` route, so all
+           * five of these cards 404'd.
+           */
+          href={`/black-car-service/${s.href}`}
           className={`mt-6 inline-flex items-center gap-2 px-6 py-2.5 w-fit ${btnPrimary}`}
         >
           {learnMore}

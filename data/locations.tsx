@@ -1,3 +1,4 @@
+import Link from "next/link";
 import React, { ReactNode } from "react";
 import type { FAMapKey } from "./Fa";
 import type { TestiMapKey } from "./Tetimonials";
@@ -186,12 +187,12 @@ export const locationEn: LocationItem[] = [
         "Insider tip: Viaro drops you at the terminal entrance, handles luggage with porters, and avoids the parking garage maze. If you are arriving from SeaTac, we time pickups to avoid the morning rush through Downtown.",
         <>
           See our dedicated{" "}
-          <a
-            href="/en/black-car-service/cruise-port-transfers"
+          <Link
+            href="/black-car-service/cruise-port-transfers"
             className="underline text-white/70 hover:text-white transition-colors"
           >
             cruise port transfer service
-          </a>{" "}
+          </Link>{" "}
           for full details on Alaska cruise transportation.
         </>,
       ],
@@ -218,12 +219,12 @@ export const locationEn: LocationItem[] = [
         "Insider tip: Pier 91 has dedicated drop-off lanes and better traffic flow than Pier 66. We coordinate arrival times with ship embarkation schedules—no waiting in line for hours. For disembarkation, we track ship arrival and meet you as you clear the terminal.",
         <>
           See our dedicated{" "}
-        <a
-            href="/en/black-car-service/cruise-port-transfers"
+        <Link
+            href="/black-car-service/cruise-port-transfers"
             className="underline text-white/70 hover:text-white transition-colors"
           >
             cruise port transfer service
-          </a>{" "}
+          </Link>{" "}
           for full details on Alaska cruise transportation.
         </>,
       ],
@@ -341,12 +342,12 @@ export const locationEn: LocationItem[] = [
       "Eastside: Bellevue, Kirkland, Redmond, Mercer Island, Medina—home to some of the highest concentrations of tech wealth in the country.",
       <>
         See our full{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           corporate transportation services
-        </a>{" "}
+        </Link>{" "}
         for executive roadshows and team shuttles.
       </>,
     ],
@@ -1516,19 +1517,19 @@ export const locationEn: LocationItem[] = [
       "Beyond Miami: Palm Beach Island, Florida Keys, Naples &amp; Marco Island, Fort Lauderdale Beach, Boca Raton &amp; Delray, Orlando &amp; Tampa (long-haul).",
       <>
         See our full{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           corporate transportation services
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           hourly chauffeur options
-        </a>
+        </Link>
         .
       </>,
     ],
@@ -1770,19 +1771,19 @@ export const locationEn: LocationItem[] = [
       "Beyond Miami: Palm Beach Island, Florida Keys, Naples &amp; Marco Island, Fort Lauderdale Beach, Boca Raton &amp; Delray, Orlando &amp; Tampa (long-haul).",
       <>
         See our full{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           corporate transportation services
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           hourly chauffeur options
-        </a>
+        </Link>
         .
       </>,
     ],
@@ -2240,19 +2241,19 @@ export const locationEn: LocationItem[] = [
       "Beyond Dallas: Fort Worth, Frisco / Plano tech corridor, Austin (long-haul), San Antonio (long-haul).",
       <>
         See our full{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           corporate transportation services
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           hourly chauffeur options
-        </a>
+        </Link>
         .
       </>,
     ],
@@ -2489,19 +2490,19 @@ export const locationEn: LocationItem[] = [
       "Beyond DC: Baltimore, Annapolis, Richmond VA, Philadelphia (long-haul).",
       <>
         See our full{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           corporate transportation services
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           hourly chauffeur options
-        </a>
+        </Link>
         .
       </>,
     ],
@@ -2721,19 +2722,19 @@ export const locationEn: LocationItem[] = [
       "Beyond Atlanta: Savannah (long-haul), Athens, Chattanooga TN, Birmingham AL.",
       <>
         See our full{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           corporate transportation services
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           hourly chauffeur options
-        </a>
+        </Link>
         .
       </>,
     ],
@@ -2968,19 +2969,19 @@ export const locationEn: LocationItem[] = [
       "Beyond Houston: Galveston Island, The Woodlands, Sugar Land, Austin (long-haul), San Antonio (long-haul).",
       <>
         See our full{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           corporate transportation services
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           hourly chauffeur options
-        </a>
+        </Link>
         .
       </>,
     ],
@@ -3223,19 +3224,19 @@ export const locationEn: LocationItem[] = [
       </>,
       <>
         See our full{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           corporate transportation services
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           hourly chauffeur options
-        </a>
+        </Link>
         .
       </>,
     ],
@@ -3454,19 +3455,19 @@ export const locationEn: LocationItem[] = [
       "Beyond Boston: Providence RI, Worcester, New Hampshire (long-haul), Cape Cod (seasonal).",
       <>
         See our full{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           corporate transportation services
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           hourly chauffeur options
-        </a>
+        </Link>
         .
       </>,
     ],
@@ -3672,12 +3673,12 @@ export const locationEn: LocationItem[] = [
       "Regional: Basalt, Carbondale, Glenwood Springs, Rifle (for private aircraft diversions and DEN-bound transfers).",
       <>
         See our full{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           hourly chauffeur options
-        </a>{" "}
+        </Link>{" "}
         — ideal for full ski days, wine tours through the Roaring Fork Valley,
         and multi-resort excursions.
       </>,
@@ -3897,19 +3898,19 @@ export const locationEn: LocationItem[] = [
       </>,
       <>
         See our full{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           corporate transportation services
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           hourly chauffeur options
-        </a>
+        </Link>
         .
       </>,
     ],
@@ -4094,19 +4095,19 @@ export const locationEn: LocationItem[] = [
       </>,
       <>
         See our full{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           corporate transportation services
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           hourly chauffeur options
-        </a>
+        </Link>
         .
       </>,
     ],
@@ -4342,19 +4343,19 @@ export const locationEn: LocationItem[] = [
       "Beyond Orlando: Tampa (1.5 hrs), Miami (4 hrs), Jacksonville (2.5 hrs), Daytona Beach (1 hr).",
       <>
         See our full{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           corporate transportation services
-        </a>{" "}
+        </Link>{" "}
         and{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           className="underline text-white/70 hover:text-white transition-colors"
         >
           hourly chauffeur options
-        </a>
+        </Link>
         .
       </>,
     ],
@@ -9018,12 +9019,12 @@ export const locationEs: LocationItem[] = [
           "Consejo experto: Viaro lo deja en la entrada de la terminal, coordina el equipaje con los maleteros y evita el laberinto del estacionamiento. Si llega desde SeaTac, programamos las recogidas para evitar la congestión matutina en el centro.",
           <>
             Consulte nuestro servicio dedicado de{" "}
-            <a
+            <Link
               href="/es/servicio-auto-lujo/traslados-puerto-cruceros"
               className="underline text-white/70 hover:text-white transition-colors"
             >
               traslados a puertos de cruceros
-            </a>{" "}
+            </Link>{" "}
             para más detalles sobre transporte para cruceros de Alaska.
           </>,
         ],
@@ -9050,12 +9051,12 @@ export const locationEs: LocationItem[] = [
           "Consejo experto: El Muelle 91 tiene carriles de descenso dedicados y mejor flujo de tráfico que el Muelle 66. Coordinamos los tiempos de llegada con los horarios de embarque del barco—sin esperar horas en la fila. Para el desembarque, rastreamos la llegada del barco y lo esperamos en cuanto salga de la terminal.",
           <>
             Consulte nuestro servicio dedicado de{" "}
-            <a
+            <Link
               href="/es/servicio-auto-lujo/traslados-puerto-cruceros"
               className="underline text-white/70 hover:text-white transition-colors"
             >
               traslados a puertos de cruceros
-            </a>{" "}
+            </Link>{" "}
             para más detalles sobre transporte para cruceros de Alaska.
           </>,
         ],
@@ -9176,12 +9177,12 @@ export const locationEs: LocationItem[] = [
         "Eastside: Bellevue, Kirkland, Redmond, Mercer Island, Medina—hogar de una de las mayores concentraciones de riqueza tecnológica del país.",
         <>
           Vea nuestros completos{" "}
-          <a
+          <Link
             href="/es/servicio-auto-lujo/transporte-corporativo"
             className="underline text-white/70 hover:text-white transition-colors"
           >
             servicios de transporte corporativo
-          </a>{" "}
+          </Link>{" "}
           para roadshows ejecutivos y traslados de equipos.
         </>,
       ],
@@ -9412,19 +9413,19 @@ export const locationEs: LocationItem[] = [
         "Más allá de Manhattan: Los Hamptons, Greenwich CT, Princeton NJ, Atlantic City y conexiones al otro lado del Hudson hacia Hoboken y Jersey City.",
         <>
           Vea nuestros completos{" "}
-          <a
+          <Link
             href="/es/servicio-auto-lujo/transporte-corporativo"
             className="underline text-white hover:text-primary transition-colors"
           >
             servicios de transporte corporativo
-          </a>{" "}
+          </Link>{" "}
           y{" "}
-          <a
+          <Link
             href="/es/servicio-auto-lujo/chofer-por-hora"
             className="underline text-white hover:text-primary transition-colors"
           >
             opciones de chofer por hora
-          </a>
+          </Link>
         </>,
       ],
       cta: "Explorar Servicios en NYC →",
@@ -9672,19 +9673,19 @@ export const locationEs: LocationItem[] = [
         "Comunidades Costeras: Malibú, Santa Mónica, Venice, Manhattan Beach, Newport Beach, Laguna Beach.",
         <>
           Vea nuestros completos{" "}
-          <a
+          <Link
             href="/es/servicio-auto-lujo/transporte-corporativo"
             className="underline text-white hover:text-primary transition-colors"
           >
             servicios de transporte corporativo
-          </a>{" "}
+          </Link>{" "}
           y{" "}
-          <a
+          <Link
             href="/es/servicio-auto-lujo/chofer-por-hora"
             className="underline text-white hover:text-primary transition-colors"
           >
             opciones de chofer por hora
-          </a>
+          </Link>
         </>,
       ],
       cta: "Explorar Servicios en LA →",
@@ -9780,7 +9781,7 @@ export const locationEs: LocationItem[] = [
         <>Distritos de Negocios: El Loop, River North, West Loop, Fulton Market, Willis Tower, <A href="https://www.boeing.com/">Sede Global de Boeing</A> y campus en Schaumburg, Oak Brook y Naperville.</>,
         <>Convenciones y Eventos: <A href="https://www.mccormickplace.com/">McCormick Place</A>, Navy Pier, <A href="https://www.unitedcenter.com/">United Center</A>, Soldier Field, Wrigley Field.</>,
         <>Universidades y Medicina: <A href="https://www.northwestern.edu/">Northwestern University</A>, Universidad de Chicago, Rush Medical Center, Northwestern Memorial Hospital.</>,
-        <>Vea nuestros completos <a href="/es/servicio-auto-lujo/transporte-corporativo" className="underline text-white hover:text-primary transition-colors">servicios de transporte corporativo</a> y <a href="/es/servicio-auto-lujo/chofer-por-hora" className="underline text-white hover:text-primary transition-colors">opciones de chofer por hora</a></>
+        <>Vea nuestros completos <Link href="/es/servicio-auto-lujo/transporte-corporativo" className="underline text-white hover:text-primary transition-colors">servicios de transporte corporativo</Link> y <Link href="/es/servicio-auto-lujo/chofer-por-hora" className="underline text-white hover:text-primary transition-colors">opciones de chofer por hora</Link></>
       ],
       cta: "Explorar Servicios en Chicago →",
     },
@@ -9829,7 +9830,7 @@ export const locationEs: LocationItem[] = [
         <>Campus Tecnológicos: Apple Park (Cupertino), Googleplex (Mountain View), Meta HQ (Menlo Park), <A href="https://www.salesforce.com/">Torre Salesforce</A> (SF), Netflix (Los Gatos), Adobe, NVIDIA, LinkedIn y oficinas de capital de riesgo en Sand Hill Road.</>,
         <>Convenciones y Eventos: <A href="https://www.moscone.com/">Centro Moscone</A> (Dreamforce, Apple WWDC, Google I/O), <A href="https://www.chasecenter.com/">Chase Center</A>, Oracle Park, Levi's Stadium.</>,
         <>Universidades: <A href="https://www.stanford.edu/">Universidad de Stanford</A>, UC Berkeley, UCSF, Universidad de Santa Clara.</>,
-        <>Vea nuestros completos <a href="/es/servicio-auto-lujo/transporte-corporativo" className="underline text-white hover:text-primary transition-colors">servicios de transporte corporativo</a> para roadshows ejecutivos y reuniones con inversores.</>
+        <>Vea nuestros completos <Link href="/es/servicio-auto-lujo/transporte-corporativo" className="underline text-white hover:text-primary transition-colors">servicios de transporte corporativo</Link> para roadshows ejecutivos y reuniones con inversores.</>
       ],
       cta: "Explorar Servicios en el Área de la Bahía →",
     },
@@ -9886,7 +9887,7 @@ export const locationEs: LocationItem[] = [
         <>Distritos de Negocios: Distrito Financiero de Brickell, Centro de Miami / <A href="https://www.miamiworldcenter.com/">Worldcenter</A>, Coconut Grove, Coral Gables, Wynwood / Distrito del Diseño, parques corporativos de Doral.</>,
         <>Eventos y Entretenimiento: <A href="https://www.kaseya.com/center">Kaseya Center</A> (Heat), <A href="https://www.hardrockstadium.com/">Hard Rock Stadium</A>, <A href="https://www.arshtcenter.org/">Adrienne Arsht Center</A>, Centro de Convenciones de Miami Beach, sedes del <A href="https://www.artbasel.com/miami-beach">Art Basel</A>, Puerto de Miami.</>,
         "Más allá de Miami: Palm Beach Island, Florida Keys, Nápoles y Marco Island, Fort Lauderdale Beach, Boca Raton y Delray, Orlando y Tampa (larga distancia).",
-        <>Vea nuestros completos <a href="/es/servicio-auto-lujo/transporte-corporativo" className="underline text-white/70 hover:text-white transition-colors">servicios de transporte corporativo</a> y <a href="/es/servicio-auto-lujo/chofer-por-hora" className="underline text-white/70 hover:text-white transition-colors">opciones de chofer por hora</a>.</>,
+        <>Vea nuestros completos <Link href="/es/servicio-auto-lujo/transporte-corporativo" className="underline text-white/70 hover:text-white transition-colors">servicios de transporte corporativo</Link> y <Link href="/es/servicio-auto-lujo/chofer-por-hora" className="underline text-white/70 hover:text-white transition-colors">opciones de chofer por hora</Link>.</>,
       ],
       cta: "Explorar Servicios en Miami →",
     },
@@ -9934,8 +9935,8 @@ export const locationEs: LocationItem[] = [
         <>Convenciones y Negocios: <A href="https://www.vegasmeansbusiness.com/">Las Vegas Convention Center</A> (CES, SEMA, NAB), Centro de Convenciones Mandalay Bay, Sands Expo, World Market Center.</>,
         <>Entretenimiento y Deportes: <A href="https://www.t-mobilearena.com/">T-Mobile Arena</A> (Golden Knights, UFC), <A href="https://www.allegiantstadium.com/">Allegiant Stadium</A> (Raiders, Super Bowl), MGM Grand Garden Arena, Sphere.</>,
         "Vida Nocturna y Gastronomía: XS Nightclub, Omnia, Hakkasan, Tao, restaurantes de chefs celebridades en todo el Strip. Nuestros choferes conocen las entradas VIP.",
-        <>Excursiones de un Día: <A href="https://www.redrockcanyonlv.org/">Red Rock Canyon</A>, Presa Hoover, Gran Cañón West, Valley of Fire. Nuestro <a href="/es/servicio-auto-lujo/chofer-por-hora" className="underline text-white hover:text-primary transition-colors">servicio de chofer por hora</a> es perfecto para excursiones al desierto.</>,
-        <>Vea nuestros completos <a href="/es/servicio-auto-lujo/transporte-corporativo" className="underline text-white hover:text-primary transition-colors">servicios de transporte corporativo</a> para grupos de convenciones y roadshows ejecutivos.</>
+        <>Excursiones de un Día: <A href="https://www.redrockcanyonlv.org/">Red Rock Canyon</A>, Presa Hoover, Gran Cañón West, Valley of Fire. Nuestro <Link href="/es/servicio-auto-lujo/chofer-por-hora" className="underline text-white hover:text-primary transition-colors">servicio de chofer por hora</Link> es perfecto para excursiones al desierto.</>,
+        <>Vea nuestros completos <Link href="/es/servicio-auto-lujo/transporte-corporativo" className="underline text-white hover:text-primary transition-colors">servicios de transporte corporativo</Link> para grupos de convenciones y roadshows ejecutivos.</>
       ],
       cta: "Explorar Servicios en Vegas →",
     },
@@ -9990,7 +9991,7 @@ export const locationEs: LocationItem[] = [
         <>Hoteles de Lujo: <A href="https://www.crescentcourt.com/">The Crescent Court</A>, <A href="https://www.rosewoodhotels.com/en/mansion-on-turtle-creek-dallas">Rosewood Mansion on Turtle Creek</A>, <A href="https://www.hotelzaza.com/dallas/">Hotel ZaZa Dallas</A>, <A href="https://www.fourseasons.com/lascolinas/">Four Seasons Las Colinas</A>, <A href="https://www.omnihotels.com/hotels/dallas">Omni Dallas Hotel</A>.</>,
         <>Eventos y Sedes: <A href="https://www.attstadium.com/">AT&T Stadium</A> (Cowboys), <A href="https://www.americanairlinescenter.com/">American Airlines Center</A> (Mavs/Stars), <A href="https://www.globelifefield.com/">Globe Life Field</A> (Rangers), Cotton Bowl, <A href="https://www.dallasconventioncenter.com/">Dallas Convention Center</A>.</>,
         "Más allá de Dallas: Fort Worth, corredor tecnológico de Frisco/Plano, Austin (larga distancia), San Antonio (larga distancia).",
-        <>Vea nuestros completos <a href="/es/servicio-auto-lujo/transporte-corporativo" className="underline text-white/70 hover:text-white transition-colors">servicios de transporte corporativo</a> y <a href="/es/servicio-auto-lujo/chofer-por-hora" className="underline text-white/70 hover:text-white transition-colors">opciones de chofer por hora</a>.</>
+        <>Vea nuestros completos <Link href="/es/servicio-auto-lujo/transporte-corporativo" className="underline text-white/70 hover:text-white transition-colors">servicios de transporte corporativo</Link> y <Link href="/es/servicio-auto-lujo/chofer-por-hora" className="underline text-white/70 hover:text-white transition-colors">opciones de chofer por hora</Link>.</>
       ],
       cta: "Explorar Servicios en Dallas →",
     },

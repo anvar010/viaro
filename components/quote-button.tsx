@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface QuoteButtonProps {
   label: string;
@@ -31,6 +31,7 @@ const HIDDEN_ON = [
 
 export function QuoteButton({ label}: QuoteButtonProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const homeRoute = "/";
   const isHome = pathname === homeRoute || pathname === `${homeRoute}/`;
@@ -63,7 +64,12 @@ export function QuoteButton({ label}: QuoteButtonProps) {
     if (isHome) {
       document.getElementById("contact-us")?.scrollIntoView({ behavior: "smooth" });
     } else {
-      window.location.href = `${homeRoute}?scrollTo=contact-us`;
+      /*
+       * router.push, not window.location.href: assigning to location throws away the
+       * client-side router and reloads the whole document — the app re-downloads and
+       * re-hydrates just to scroll to an anchor on a page it already had.
+       */
+      router.push(`${homeRoute}?scrollTo=contact-us`);
     }
   };
 

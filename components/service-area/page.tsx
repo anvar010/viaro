@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { FA } from "../FA";
 import { FAMap } from "@/data/Fa";
 import { TestimonialsMap } from "@/data/Tetimonials";
@@ -160,7 +160,7 @@ export default function LocationPage() {
         className="relative min-h-screen flex items-center pt-0"
         style={{ height: "100dvh" }}
       >
-        <Image
+        <SafeImage
           src={data.hero.image.src}
           alt={data.hero.image.alt}
           fill
@@ -312,7 +312,7 @@ export default function LocationPage() {
             {data.bodyContent.image && (
               <div>
                 <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-white/5">
-                  <Image
+                  <SafeImage
                     src={data.bodyContent.image.src}
                     alt={data.bodyContent.image.alt}
                     fill
@@ -356,7 +356,7 @@ export default function LocationPage() {
                     </div>
                     <div>
                       <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden border border-white/5">
-                        <Image
+                        <SafeImage
                           src={section.image.src}
                           alt={section.image.alt}
                           fill
@@ -569,7 +569,7 @@ export default function LocationPage() {
         {/* Image */}
         <div>
           <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden border border-white/5">
-            <Image
+            <SafeImage
               src={data.whereSection.image.src}
               alt={data.whereSection.image.alt}
               fill

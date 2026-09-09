@@ -43,8 +43,16 @@ export default async function EditBookingPage({
 
   if (booking.status === "cancelled") redirect(`/trips/${id}`);
 
+  /*
+   * `Date.now()` is safe here: this is a Server Component (no "use client"), so it is
+   * evaluated once on the server while rendering and never re-run on the client — there
+   * is no second value to mismatch against. The rule cannot tell server from client
+   * components, and the cutoff itself mirrors the backend's CHANGE_CUTOFF_HOURS rule.
+   */
+  // eslint-disable-next-line react-hooks/purity
+  const renderedAt = Date.now();
   const hoursUntilPickup =
-    (new Date(booking.scheduledAt).getTime() - Date.now()) / 3_600_000;
+    (new Date(booking.scheduledAt).getTime() - renderedAt) / 3_600_000;
   const locked = hoursUntilPickup < CHANGE_CUTOFF_HOURS;
 
   return (

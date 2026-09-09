@@ -695,7 +695,7 @@ extraContent: [
       security allows—usually right at the terminal curb. You walk off the
       ship and into a luxury private car{" "}
       <a
-        href="/en/fleet"
+        href="/fleet"
         className="text-white border-b border-white/60 hover:border-primary hover:text-primary transition"
       >
         FLEET
@@ -844,7 +844,7 @@ extraContent: [
   "Our chauffeurs respect your privacy and provide a quiet, secure environment.",
   <>
     This flexible service is perfect for a wide range of needs across our{" "}
-    <a href="/en/service-areas/" className="text-primary underline">
+    <a href="/service-areas/" className="text-primary underline">
       service areas
     </a>.
   </>,

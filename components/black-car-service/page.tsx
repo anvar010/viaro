@@ -717,7 +717,13 @@ export default function ServicePage() {
                 {section.cta && (
                   <div className="text-center">
                     <a href="/book">
-                      <Button className={`px-8 h-11 sm:h-12 ${btnPrimary}`}>
+                      {/*
+                        * Wraps instead of overflowing: these CTA strings are long enough
+                        * ("Check Cruise Port Availability & Rates →") that a nowrap,
+                        * fixed-height button pushed the whole page wider than a 375px
+                        * viewport. h-auto + whitespace-normal lets the label use two lines.
+                        */}
+                      <Button className={`px-8 h-auto min-h-11 sm:min-h-12 sm:h-auto max-w-full whitespace-normal text-center leading-snug py-2.5 ${btnPrimary}`}>
                         {section.cta}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
@@ -797,7 +803,8 @@ export default function ServicePage() {
           </div>
           <div className="mt-10 text-center">
             <a href="/book">
-              <Button className={`px-8 h-11 sm:h-12 ${btnPrimary}`}>
+              {/* Same long-label wrapping as the section CTA above. */}
+              <Button className={`px-8 h-auto min-h-11 sm:min-h-12 sm:h-auto max-w-full whitespace-normal text-center leading-snug py-2.5 ${btnPrimary}`}>
                 {cityData.pricing.cta}
               </Button>
             </a>

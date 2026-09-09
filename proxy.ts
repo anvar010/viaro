@@ -97,7 +97,12 @@ async function refresh(token: string) {
   }
 }
 
-export async function middleware(request: NextRequest) {
+/*
+ * Renamed from `middleware` to `proxy` (and middleware.ts -> proxy.ts) for the Next 16
+ * file convention; the dev server warned the old one is deprecated. Behaviour is
+ * unchanged — same guard, same matcher, same cookie handling.
+ */
+export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   let access = request.cookies.get(ACCESS_COOKIE)?.value ?? null;

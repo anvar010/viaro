@@ -1,3 +1,4 @@
+import Link from "next/link";
 export const ServicesFa = [
   {
     question:"What types of vehicles do you offer for chauffeur service?",
@@ -120,12 +121,12 @@ export const AboutFa = [
         We serve all 50 US states, Canada, and Costa Rica—over 40 cities and growing. Our
         headquarters are in Seattle, Washington, but our reach spans the continent. More
         countries are in development. See our full service areas{" "}
-        <a
-          href="/en/service-areas/"
+        <Link
+          href="/service-areas/"
           className="underline underline-offset-4 font-semibold hover:text-primary"
         >
           here
-        </a>.
+        </Link>.
       </>
     )
   },
@@ -287,13 +288,13 @@ export const LocationsLAFa = [
     question:"Can I book an all-day car in LA?",
     answer:<>
         Yes. Our{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           rel="noopener noreferrer"
           className="underline underline-offset-4 font-semibold hover:text-primary"
         >
           hourly chauffeur service
-        </a>{" "}
+        </Link>{" "}
         is perfect for studio visits, shopping on Rodeo Drive, or wine country day trips. Your driver waits while you work. 3-hour minimum.
         </>
   },
@@ -328,13 +329,13 @@ export const LocationsSanFranciscoFa = [
     question:"Can I book a car for investor meetings on Sand Hill Road?",
     answer:<>
         Yes. Our{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           rel="noopener noreferrer"
           className="underline underline-offset-4 font-semibold hover:text-primary"
         >
           corporate transportation
-        </a>{" "}
+        </Link>{" "}
         and hourly chauffeur services are popular with founders doing VC pitches. Your driver waits outside while you meet with Sequoia, Andreessen, or Kleiner Perkins, then takes you to the next firm.
         </>
   },
@@ -369,13 +370,13 @@ export const LocationsChicagocoFa = [
     question:"Can I book an all-day car in Chicago?",
     answer:<>
         Yes. Our{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           rel="noopener noreferrer"
           className="underline underline-offset-4 font-semibold hover:text-primary"
         >
           hourly chauffeur service
-        </a>{" "}
+        </Link>{" "}
         is perfect for client meetings, office visits across the city, or full-day coverage during conferences. Your driver waits while you work. 3-hour minimum.
         </>
   },
@@ -586,13 +587,13 @@ export const locationNewYorkFA = [
     answer:
       <>
         Yes. Our{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           rel="noopener noreferrer"
           className="underline underline-offset-4 font-semibold hover:text-primary"
         >
           hourly chauffeur service
-        </a>{" "}
+        </Link>{" "}
         is perfect for full-day Manhattan coverage. Your driver waits while you attend meetings, shop, or dine. 3-hour minimum.
       </>,
   },
@@ -637,13 +638,13 @@ export const locationLasVegasFA = [
     question: "Can I book a car for a Grand Canyon day trip?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for day trips to Grand Canyon West, Hoover Dam, Red Rock Canyon, and Valley of Fire. Your driver waits while you explore. 3-hour minimum.
     </>,
   },
@@ -685,13 +686,13 @@ export const locationMiamiFA = [
     answer:
       <>
         Yes. Our{" "}
-        <a
-          href="/en/black-car-service/hourly-chauffeur-hire"
+        <Link
+          href="/black-car-service/hourly-chauffeur-hire"
           rel="noopener noreferrer"
           className="underline underline-offset-4 font-semibold hover:text-primary"
         >
           hourly chauffeur service
-        </a>{" "}
+        </Link>{" "}
         is perfect for Art Basel, the Design District, or a full day of meetings in Brickell. Your driver waits while you work. 3-hour minimum.
       </>,
   },
@@ -737,13 +738,13 @@ export const locationDallasFA = [
     answer:
       <>
         Yes. Our{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           rel="noopener noreferrer"
           className="underline underline-offset-4 font-semibold hover:text-primary"
         >
           corporate transportation
-        </a>{" "}
+        </Link>{" "}
         service is popular for roadshows, investor meetings in Uptown, and multi-stop days across the Metroplex. Your driver waits while you work. 3-hour minimum for hourly service.
       </>,
   },
@@ -789,13 +790,13 @@ export const locationWashingtonFA = [
     answer:
       <>
         Yes. Our{" "}
-        <a
-          href="/en/black-car-service/corporate-transportation"
+        <Link
+          href="/black-car-service/corporate-transportation"
           rel="noopener noreferrer"
           className="underline underline-offset-4 font-semibold hover:text-primary"
         >
           corporate transportation
-        </a>{" "}
+        </Link>{" "}
         service is widely used for government affairs, multi-agency meetings, and full-day coverage across Capitol Hill, K Street, and the Virginia and Maryland suburbs. 3-hour minimum for hourly service.
       </>,
   },
@@ -836,13 +837,13 @@ export const locationAtlantaFA = [
     question: "Can I book an all-day car in Atlanta?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for Buckhead meetings, Midtown office visits, or full-day coverage during a conference. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -883,13 +884,13 @@ export const locationHoustonFA = [
     question: "Can I book a car for the Texas Medical Center?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is ideal for medical appointments, hospital visits, and multi-stop days at the Texas Medical Center. Your driver waits during appointments. 3-hour minimum.
     </>,
   },
@@ -930,13 +931,13 @@ export const locationBostonFA = [
     question: "Can I book a car for a full day in Boston?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for Back Bay meetings, Kendall Square biotech visits, or full-day coverage during a conference. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -977,13 +978,13 @@ export const locationDenverFA = [
     question: "Can I book a car for a ski resort day trip?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for day trips to Breckenridge, Keystone, or Arapahoe Basin. Your driver waits at the resort while you ski. 3-hour minimum.
     </>,
   },
@@ -1024,13 +1025,13 @@ export const locationAspenVailFA = [
     question: "Can I book a car for multi-resort skiing in the same day?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for moving between Aspen Mountain, Snowmass, Buttermilk, and Highlands in one day. Your driver waits at each resort. 3-hour minimum.
     </>,
   },
@@ -1071,13 +1072,13 @@ export const locationPhoenixFA = [
     question: "Can I book a car for a resort day in Scottsdale?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for golf at TPC Scottsdale, spa days at The Boulders, or multiple resort visits in one day. Your driver waits while you enjoy. 3-hour minimum.
     </>,
   },
@@ -1118,13 +1119,13 @@ export const locationAustinFA = [
     question: "Can I book a car for a full day in Austin?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for tech office visits along The Domain, multiple meetings around 6th Street, or a full SXSW day. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -1165,13 +1166,13 @@ export const locationOrlandoFA = [
     question: "Can I book a car for a theme park family day?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for park-hopping between Disney and Universal in one day. Your driver handles drop-offs and pickups so you never worry about parking or rideshare surge pricing. 3-hour minimum.
     </>,
   },
@@ -1212,13 +1213,13 @@ export const locationTorontoFA = [
     question: "Can I book a car for a full day in Toronto?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for Bay Street meetings, multi-stop days in the Financial District, or visiting clients across the GTA. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -1259,13 +1260,13 @@ export const locationNashvilleFA = [
     question: "Can I book a designated driver service in Nashville?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is one of the most popular options for bar crawls on Broadway, bachelorette parties, and late-night events. We pick you up, wait while you enjoy, and get you home safely. 3-hour minimum.
     </>,
   },
@@ -1306,13 +1307,13 @@ export const locationPalmSpringsFA = [
     question: "Can I book a car for a golf resort day?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for golf days at PGA West, The Vintage Club, or Desert Willow. Your driver waits at the course while you play. 3-hour minimum.
     </>,
   },
@@ -1353,13 +1354,13 @@ export const locationCharlotteFA = [
     question: "Can I book a car for a full day in Charlotte?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is ideal for multi-stop banking and finance meetings in Uptown, or covering clients across the metro area. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -1400,13 +1401,13 @@ export const locationSanDiegoFA = [
     question: "Can I book a car for a full day in San Diego?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for biotech and defense meetings in Sorrento Valley, winery tours in Temecula, or a coastal day in La Jolla. Your driver waits while you work or explore. 3-hour minimum.
     </>,
   },
@@ -1447,13 +1448,13 @@ export const locationNaplesFortMyersFA = [
     question: "Can I book a car for a golf day in Naples?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for golf at Tiburón, The Club at Mediterra, or a multi-course day around Southwest Florida. Your driver waits at the club while you play. 3-hour minimum.
     </>,
   },
@@ -1494,13 +1495,13 @@ export const locationTampaFA = [
     question: "Can I book a car for a full day in the Tampa Bay area?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for covering meetings across Tampa, St. Pete, and Clearwater in one day. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -1541,13 +1542,13 @@ export const locationPhiladelphiaFA = [
     question: "Can I book a car for a full day in Philadelphia?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is ideal for multi-stop days along Market Street, life sciences meetings in King of Prussia, or covering clients across the tri-state area. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -1588,13 +1589,13 @@ export const locationVancouverFA = [
     question: "Can I book a car for a Whistler ski trip?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for a full day at Whistler or Blackcomb. Your driver handles the Sea-to-Sky drive while you relax, and waits at the village while you ski. 3-hour minimum.
     </>,
   },
@@ -1635,13 +1636,13 @@ export const locationMinneapolisFA = [
     question: "Can I book a car for a full day in the Twin Cities?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for medical device and healthcare meetings in the Med Alley corridor, or multi-stop days across Minneapolis and Saint Paul. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -1682,13 +1683,13 @@ export const locationHonoluluFA = [
     question: "Can I book a car for an island day tour?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for a full Oahu circle island tour—Pali Lookout, Haleiwa, and back. Your driver handles all the driving. 3-hour minimum.
     </>,
   },
@@ -1729,13 +1730,13 @@ export const locationDetroitFA = [
     question: "Can I book a car for automotive industry meetings in the Detroit area?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/corporate-transportation"
+      <Link
+        href="/black-car-service/corporate-transportation"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         corporate transportation
-      </a>{" "}
+      </Link>{" "}
       service is widely used for supplier visits, OEM meetings in Auburn Hills, and multi-stop days across Southeast Michigan. Your driver waits while you work. 3-hour minimum for hourly service.
     </>,
   },
@@ -1776,13 +1777,13 @@ export const locationSaltLakeCityFA = [
     question: "Can I book a car for Sundance Film Festival?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect during Sundance for getting between Park City venues, screenings, and parties. Book well in advance—it is one of the highest-demand weeks of the year in Utah. 3-hour minimum.
     </>,
   },
@@ -1823,13 +1824,13 @@ export const locationJacksonHoleFA = [
     question: "Can I book a car for a Yellowstone day trip?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for a full day in Yellowstone or Grand Teton National Park. Your driver handles all the driving so you can focus on the scenery. 3-hour minimum.
     </>,
   },
@@ -1870,13 +1871,13 @@ export const locationRaleighDurhamFA = [
     question: "Can I book a car for a full day across the Research Triangle?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/corporate-transportation"
+      <Link
+        href="/black-car-service/corporate-transportation"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         corporate transportation
-      </a>{" "}
+      </Link>{" "}
       service is ideal for multi-campus days across Raleigh, Durham, and Chapel Hill. Your driver waits between stops while you focus on your meetings. 3-hour minimum for hourly service.
     </>,
   },
@@ -1917,13 +1918,13 @@ export const locationNewOrleansFA = [
     question: "Can I book a designated driver for a night in the French Quarter?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is one of the most popular bookings in New Orleans. We pick you up, wait while you enjoy Bourbon Street or Frenchmen Street, and get you home safely. 3-hour minimum.
     </>,
   },
@@ -1964,13 +1965,13 @@ export const locationCincinnatiFA = [
     question: "Can I book a car for a full day in the Greater Cincinnati area?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for multi-stop corporate days across Cincinnati, Northern Kentucky, and the Dayton corridor. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -2011,13 +2012,13 @@ export const locationPortlandFA = [
     question: "Can I book a car for a Willamette Valley wine tour?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for a full day exploring Pinot Noir country in Dundee Hills and the Yamhill-Carlton AVA. Your driver handles all the driving between wineries. 3-hour minimum.
     </>,
   },
@@ -2058,13 +2059,13 @@ export const locationCostaRicaFA = [
     question: "¿Puedo reservar un auto para un tour de un día por Costa Rica?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para visitar el Volcán Arenal, las aguas termales, los parques nacionales o las plantaciones de café. Su chofer lo espera mientras usted disfruta. Mínimo de 3 horas.
     </>,
   },
@@ -2105,13 +2106,13 @@ export const locationSacramentoFA = [
     question: "Can I book a car for a Lake Tahoe ski trip?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for day trips to Heavenly, Northstar, or Squaw Valley from Sacramento. Your driver handles the mountain drive while you relax. 3-hour minimum.
     </>,
   },
@@ -2152,13 +2153,13 @@ export const locationStLouisFA = [
     question: "Can I book a car for a full day in St. Louis?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for multi-stop corporate days across Downtown, Clayton, and the suburbs. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -2199,13 +2200,13 @@ export const locationColumbusFA = [
     question: "Can I book a car for a full day in Columbus?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is ideal for corporate days across the Short North, the Easton corridor, or visiting clients in the Dublin tech and insurance hub. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -2246,13 +2247,13 @@ export const locationIndianapolisFA = [
     question: "Can I book a car for a full day in Indianapolis?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for pharmaceutical and life sciences meetings in the Meridian corridor, or multi-stop corporate days across the metro. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -2293,13 +2294,13 @@ export const locationCharlestonFA = [
     question: "Can I book a car for a plantation and historic tour?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for visiting Boone Hall, Magnolia, or Middleton Place plantations in one day. Your driver handles all the driving across the Lowcountry. 3-hour minimum.
     </>,
   },
@@ -2340,13 +2341,13 @@ export const locationClevelandFA = [
     question: "Can I book a car for a full day in Cleveland?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for multi-stop healthcare and biomedical meetings in the Cleveland Clinic and University Hospitals corridor, or covering clients across Northeast Ohio. 3-hour minimum.
     </>,
   },
@@ -2387,13 +2388,13 @@ export const locationPittsburghFA = [
     question: "Can I book a car for a full day in Pittsburgh?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is ideal for tech and robotics meetings in Oakland and Lawrenceville, or multi-stop corporate days across the city. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -2434,13 +2435,13 @@ export const locationSanAntonioFA = [
     question: "Can I book a car for a Hill Country winery tour?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for a full day of winery visits along the Fredericksburg Wine Road or through Wimberley. Your driver handles all the driving while you enjoy the Hill Country. 3-hour minimum.
     </>,
   },
@@ -2481,13 +2482,13 @@ export const locationMilwaukeeFA = [
     question: "Can I book a car for a full day in the Milwaukee area?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for covering corporate meetings across Milwaukee, Waukesha, and Racine in one day. Your driver waits while you work. 3-hour minimum.
     </>,
   },
@@ -2528,13 +2529,13 @@ export const locationSavannahFA = [
     question: "Can I book a designated driver for a Savannah evening?",
     answer: <>
       Yes. Our{" "}
-      <a
-        href="/en/black-car-service/hourly-chauffeur-hire"
+      <Link
+        href="/black-car-service/hourly-chauffeur-hire"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         hourly chauffeur service
-      </a>{" "}
+      </Link>{" "}
       is perfect for exploring Savannah's famous open-container squares, River Street, and the City Market without worrying about parking or a ride home. 3-hour minimum.
     </>,
   },
@@ -2716,12 +2717,12 @@ export const AboutFaEs = [
         Atendemos los 50 estados de EE. UU., Canadá y Costa Rica—más de 40 ciudades y en crecimiento. Nuestra
         sede está en Seattle, Washington, pero nuestro alcance abarca todo el continente. Más
         países están en desarrollo. Vea todas nuestras áreas de servicio{" "}
-        <a
+        <Link
           href="/es/areas-de-servicio/"
           className="underline underline-offset-4 font-semibold hover:text-primary"
         >
           aquí
-        </a>.
+        </Link>.
       </>
     )
   },
@@ -2883,13 +2884,13 @@ export const LocationsLAFaEs = [
     question: "¿Puedo reservar un auto para todo el día en LA?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para visitas a estudios, compras en Rodeo Drive o excursiones de un día a wine country. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>
   },
@@ -2924,13 +2925,13 @@ export const LocationsSanFranciscoFaEs = [
     question: "¿Puedo reservar un auto para reuniones con inversores en Sand Hill Road?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/transporte-corporativo"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         transporte corporativo
-      </a>{" "}
+      </Link>{" "}
       y servicio de chofer por hora son muy populares entre fundadores que hacen pitches de VC. Su conductor espera afuera mientras usted se reúne con Sequoia, Andreessen o Kleiner Perkins, y luego lo lleva a la siguiente firma.
     </>
   },
@@ -2965,13 +2966,13 @@ export const LocationsChicagocoFaEs = [
     question: "¿Puedo reservar un auto para todo el día en Chicago?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para reuniones con clientes, visitas a oficinas por toda la ciudad o cobertura de un día completo durante conferencias. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>
   },
@@ -3168,13 +3169,13 @@ export const locationNewYorkFAEs = [
     question: "¿Puedo reservar un auto para un día completo en Manhattan?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para cobertura de un día completo en Manhattan. Su conductor espera mientras usted asiste a reuniones, compra o cena. Mínimo de 3 horas.
     </>,
   },
@@ -3213,13 +3214,13 @@ export const locationLasVegasFAEs = [
     question: "¿Puedo reservar un auto para una excursión de un día al Gran Cañón?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para excursiones de un día al Gran Cañón Oeste, la Presa Hoover, Red Rock Canyon y Valley of Fire. Su chofer lo espera mientras usted explora. Mínimo de 3 horas.
     </>,
   },
@@ -3254,13 +3255,13 @@ export const locationMiamiFAEs = [
     question: "¿Puedo reservar un auto para un día completo en Miami?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para Art Basel, el Design District o un día completo de reuniones en Brickell. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -3299,13 +3300,13 @@ export const locationDallasFAEs = [
     question: "¿Puedo reservar un auto para roadshows corporativos en Dallas?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/transporte-corporativo"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         transporte corporativo
-      </a>{" "}
+      </Link>{" "}
       es popular para roadshows, reuniones con inversores en Uptown y días de múltiples paradas por la metrópolis. Su conductor espera mientras usted trabaja. Mínimo de 3 horas para servicio por hora.
     </>,
   },
@@ -3340,13 +3341,13 @@ export const locationWashingtonFAEs = [
     question: "¿Puedo reservar un auto para reuniones en el Congreso o días de cabildeo?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/transporte-corporativo"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         transporte corporativo
-      </a>{" "}
+      </Link>{" "}
       es ampliamente utilizado para asuntos gubernamentales, reuniones en múltiples agencias y cobertura de un día completo en Capitol Hill, K Street y los suburbios de Virginia y Maryland. Mínimo de 3 horas para servicio por hora.
     </>,
   },
@@ -3381,13 +3382,13 @@ export const locationAtlantaFAEs = [
     question: "¿Puedo reservar un auto para todo el día en Atlanta?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para reuniones en Buckhead, visitas a oficinas en Midtown o cobertura de un día completo durante una conferencia. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -3422,13 +3423,13 @@ export const locationHoustonFAEs = [
     question: "¿Puedo reservar un auto para el Texas Medical Center?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es ideal para citas médicas, visitas al hospital y días de múltiples paradas en el Texas Medical Center. Su conductor espera durante las citas. Mínimo de 3 horas.
     </>,
   },
@@ -3463,13 +3464,13 @@ export const locationBostonFAEs = [
     question: "¿Puedo reservar un auto para un día completo en Boston?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para reuniones en Back Bay, visitas a empresas biotecnológicas en Kendall Square o cobertura de un día completo durante una conferencia. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -3504,13 +3505,13 @@ export const locationDenverFAEs = [
     question: "¿Puedo reservar un auto para una excursión de esquí?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para excursiones de un día a Breckenridge, Keystone o Arapahoe Basin. Su conductor espera en el resort mientras usted esquía. Mínimo de 3 horas.
     </>,
   },
@@ -3545,13 +3546,13 @@ export const locationAspenVailFAEs = [
     question: "¿Puedo reservar un auto para esquiar en varios resorts en un mismo día?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para moverse entre Aspen Mountain, Snowmass, Buttermilk y Highlands en un solo día. Su conductor espera en cada resort. Mínimo de 3 horas.
     </>,
   },
@@ -3586,13 +3587,13 @@ export const locationPhoenixFAEs = [
     question: "¿Puedo reservar un auto para un día de resort en Scottsdale?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para golf en TPC Scottsdale, días de spa en The Boulders o visitas a múltiples resorts en un día. Su conductor espera mientras usted disfruta. Mínimo de 3 horas.
     </>,
   },
@@ -3627,13 +3628,13 @@ export const locationAustinFAEs = [
     question: "¿Puedo reservar un auto para un día completo en Austin?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para visitas a oficinas tecnológicas en The Domain, múltiples reuniones en la zona de 6th Street o un día completo de SXSW. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -3668,13 +3669,13 @@ export const locationOrlandoFAEs = [
     question: "¿Puedo reservar un auto para un día familiar en los parques temáticos?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para moverse entre Disney y Universal en un mismo día. Su conductor gestiona los traslados para que nunca se preocupe por el estacionamiento ni por los precios de demanda de otras apps. Mínimo de 3 horas.
     </>,
   },
@@ -3709,13 +3710,13 @@ export const locationTorontoFAEs = [
     question: "¿Puedo reservar un auto para un día completo en Toronto?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para reuniones en Bay Street, días de múltiples paradas en el Distrito Financiero o visitas a clientes por todo el GTA. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -3750,13 +3751,13 @@ export const locationNashvilleFAEs = [
     question: "¿Puedo reservar el servicio de conductor designado en Nashville?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es una de las opciones más populares para recorrer Broadway, fiestas de despedida de soltero/a y eventos nocturnos. Lo recogemos, esperamos mientras usted disfruta y lo llevamos a casa con seguridad. Mínimo de 3 horas.
     </>,
   },
@@ -3791,13 +3792,13 @@ export const locationPalmSpringsFAEs = [
     question: "¿Puedo reservar un auto para un día de golf en los resorts?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para golf en PGA West, The Vintage Club o Desert Willow. Su conductor espera en el campo mientras usted juega. Mínimo de 3 horas.
     </>,
   },
@@ -3832,13 +3833,13 @@ export const locationCharlotteFAEs = [
     question: "¿Puedo reservar un auto para un día completo en Charlotte?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es ideal para múltiples reuniones de banca y finanzas en Uptown, o para cubrir clientes por toda la metrópolis. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -3873,13 +3874,13 @@ export const locationSanDiegoFAEs = [
     question: "¿Puedo reservar un auto para un día completo en San Diego?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para reuniones de biotecnología y defensa en Sorrento Valley, tours de vino en Temecula o un día costero en La Jolla. Su conductor espera mientras usted trabaja o explora. Mínimo de 3 horas.
     </>,
   },
@@ -3914,13 +3915,13 @@ export const locationNaplesFortMyersFAEs = [
     question: "¿Puedo reservar un auto para un día de golf en Naples?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para golf en Tiburón, The Club at Mediterra o un día de múltiples canchas por el Suroeste de Florida. Su conductor espera en el club mientras usted juega. Mínimo de 3 horas.
     </>,
   },
@@ -3955,13 +3956,13 @@ export const locationTampaFAEs = [
     question: "¿Puedo reservar un auto para un día completo en el área de Tampa Bay?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para cubrir reuniones en Tampa, St. Pete y Clearwater en un solo día. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -3996,13 +3997,13 @@ export const locationPhiladelphiaFAEs = [
     question: "¿Puedo reservar un auto para un día completo en Filadelfia?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es ideal para días de múltiples paradas en Market Street, reuniones de ciencias de la vida en King of Prussia o cubrir clientes por los tres estados. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -4037,13 +4038,13 @@ export const locationVancouverFAEs = [
     question: "¿Puedo reservar un auto para un viaje de esquí a Whistler?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para un día completo en Whistler o Blackcomb. Su conductor maneja la ruta por Sea-to-Sky mientras usted se relaja, y espera en el pueblo mientras usted esquía. Mínimo de 3 horas.
     </>,
   },
@@ -4078,13 +4079,13 @@ export const locationMinneapolisFAEs = [
     question: "¿Puedo reservar un auto para un día completo en las Ciudades Gemelas?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para reuniones de dispositivos médicos y salud en el corredor Med Alley, o días de múltiples paradas entre Minneapolis y Saint Paul. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -4119,13 +4120,13 @@ export const locationHonoluluFAEs = [
     question: "¿Puedo reservar un auto para un tour de la isla?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para un tour completo por la isla de Oahu—Pali Lookout, Haleiwa y de regreso. Su conductor se encarga de todo el manejo. Mínimo de 3 horas.
     </>,
   },
@@ -4160,13 +4161,13 @@ export const locationDetroitFAEs = [
     question: "¿Puedo reservar un auto para reuniones de la industria automotriz en Detroit?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/transporte-corporativo"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         transporte corporativo
-      </a>{" "}
+      </Link>{" "}
       es ampliamente utilizado para visitas a proveedores, reuniones con OEMs en Auburn Hills y días de múltiples paradas por el Sureste de Michigan. Su conductor espera mientras usted trabaja. Mínimo de 3 horas para servicio por hora.
     </>,
   },
@@ -4201,13 +4202,13 @@ export const locationSaltLakeCityFAEs = [
     question: "¿Puedo reservar un auto para el Festival de Cine de Sundance?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto durante Sundance para moverse entre los venues de Park City, proyecciones y fiestas. Reserve con mucha anticipación—es una de las semanas de mayor demanda del año en Utah. Mínimo de 3 horas.
     </>,
   },
@@ -4242,13 +4243,13 @@ export const locationJacksonHoleFAEs = [
     question: "¿Puedo reservar un auto para una excursión de un día a Yellowstone?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para un día completo en Yellowstone o el Parque Nacional Grand Teton. Su conductor se encarga de todo el manejo para que usted pueda disfrutar del paisaje. Mínimo de 3 horas.
     </>,
   },
@@ -4283,13 +4284,13 @@ export const locationRaleighDurhamFAEs = [
     question: "¿Puedo reservar un auto para un día completo en el Research Triangle?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/transporte-corporativo"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         transporte corporativo
-      </a>{" "}
+      </Link>{" "}
       es ideal para días de múltiples campus en Raleigh, Durham y Chapel Hill. Su conductor espera entre paradas mientras usted se concentra en sus reuniones. Mínimo de 3 horas para servicio por hora.
     </>,
   },
@@ -4324,13 +4325,13 @@ export const locationNewOrleansFAEs = [
     question: "¿Puedo reservar un conductor designado para una noche en el Barrio Francés?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es una de las reservas más populares en Nueva Orleans. Lo recogemos, esperamos mientras usted disfruta de Bourbon Street o Frenchmen Street, y lo llevamos a casa con seguridad. Mínimo de 3 horas.
     </>,
   },
@@ -4365,13 +4366,13 @@ export const locationCincinnatiFAEs = [
     question: "¿Puedo reservar un auto para un día completo en el área de Cincinnati?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para días corporativos de múltiples paradas por Cincinnati, el Norte de Kentucky y el corredor de Dayton. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -4406,13 +4407,13 @@ export const locationPortlandFAEs = [
     question: "¿Puedo reservar un auto para un tour de vino en el Valle de Willamette?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para un día completo explorando el Pinot Noir de Dundee Hills y el AVA Yamhill-Carlton. Su conductor se encarga de todos los traslados entre bodegas. Mínimo de 3 horas.
     </>,
   },
@@ -4447,13 +4448,13 @@ export const locationCostaRicaFAEs = [
     question: "¿Puedo reservar un auto para un tour de un día por Costa Rica?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para visitar el Volcán Arenal, las aguas termales, los parques nacionales o las plantaciones de café. Su chofer lo espera mientras usted disfruta. Mínimo de 3 horas.
     </>,
   },
@@ -4488,13 +4489,13 @@ export const locationSacramentoFAEs = [
     question: "¿Puedo reservar un auto para un viaje de esquí a Lake Tahoe?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para excursiones de un día a Heavenly, Northstar o Squaw Valley desde Sacramento. Su conductor maneja la ruta de montaña mientras usted se relaja. Mínimo de 3 horas.
     </>,
   },
@@ -4529,13 +4530,13 @@ export const locationStLouisFAEs = [
     question: "¿Puedo reservar un auto para un día completo en St. Louis?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para días corporativos de múltiples paradas por el centro, Clayton y los suburbios. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -4570,13 +4571,13 @@ export const locationColumbusFAEs = [
     question: "¿Puedo reservar un auto para un día completo en Columbus?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es ideal para días corporativos en Short North, el corredor de Easton o visitando clientes en el hub de tecnología y seguros de Dublin. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -4611,13 +4612,13 @@ export const locationIndianapolisFAEs = [
     question: "¿Puedo reservar un auto para un día completo en Indianápolis?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para reuniones farmacéuticas y de ciencias de la vida en el corredor Meridian, o días corporativos de múltiples paradas por la metrópolis. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -4652,13 +4653,13 @@ export const locationCharlestonFAEs = [
     question: "¿Puedo reservar un auto para un tour de plantaciones e historia?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para visitar las plantaciones Boone Hall, Magnolia o Middleton Place en un mismo día. Su conductor se encarga de todos los traslados por el Lowcountry. Mínimo de 3 horas.
     </>,
   },
@@ -4693,13 +4694,13 @@ export const locationClevelandFAEs = [
     question: "¿Puedo reservar un auto para un día completo en Cleveland?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para reuniones de salud y biomedicina en el corredor de Cleveland Clinic y University Hospitals, o para cubrir clientes por todo el Noreste de Ohio. Mínimo de 3 horas.
     </>,
   },
@@ -4734,13 +4735,13 @@ export const locationPittsburghFAEs = [
     question: "¿Puedo reservar un auto para un día completo en Pittsburgh?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es ideal para reuniones de tecnología y robótica en Oakland y Lawrenceville, o días corporativos de múltiples paradas por la ciudad. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -4775,13 +4776,13 @@ export const locationSanAntonioFAEs = [
     question: "¿Puedo reservar un auto para un tour de bodegas por el Hill Country?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para un día completo de visitas a bodegas a lo largo del Fredericksburg Wine Road o por Wimberley. Su conductor se encarga de todo el manejo mientras usted disfruta del Hill Country. Mínimo de 3 horas.
     </>,
   },
@@ -4816,13 +4817,13 @@ export const locationMilwaukeeFAEs = [
     question: "¿Puedo reservar un auto para un día completo en el área de Milwaukee?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para cubrir reuniones corporativas por Milwaukee, Waukesha y Racine en un solo día. Su conductor espera mientras usted trabaja. Mínimo de 3 horas.
     </>,
   },
@@ -4857,13 +4858,13 @@ export const locationSavannahFAEs = [
     question: "¿Puedo reservar un conductor designado para una noche en Savannah?",
     answer: <>
       Sí. Nuestro{" "}
-      <a
+      <Link
         href="/es/servicio-auto-lujo/chofer-por-hora"
         rel="noopener noreferrer"
         className="underline underline-offset-4 font-semibold hover:text-primary"
       >
         servicio de chofer por hora
-      </a>{" "}
+      </Link>{" "}
       es perfecto para explorar las famosas plazas de contenedor abierto de Savannah, River Street y City Market sin preocuparse por el estacionamiento ni cómo volver a casa. Mínimo de 3 horas.
     </>,
   },

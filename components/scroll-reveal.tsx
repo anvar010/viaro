@@ -3,69 +3,79 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
+/**
+ * Scroll-reveal animation, applied without fighting hydration.
+ *
+ * The previous version ran its `querySelectorAll` pass on a 120 ms timer and added a
+ * `.reveal` class to nearly every element on the page. With streamed RSC content that
+ * timer regularly fired while React was still hydrating, so React found DOM nodes
+ * carrying classes its own render did not produce — a hydration mismatch logged on every
+ * fresh page load, on every page. It also injected its stylesheet with
+ * `document.createElement("style")` at runtime, which is more markup React does not know
+ * about.
+ *
+ * Two changes fix it:
+ *   - the CSS lives in globals.css, so no style element is created at runtime;
+ *   - the DOM pass is deferred past hydration with `requestAnimationFrame` (double-RAF,
+ *     which lands after React has committed) instead of a guessed timeout.
+ *
+ * `prefers-reduced-motion` is honoured by skipping the effect entirely — the content is
+ * then simply visible, which is the correct reduced-motion behaviour.
+ */
+
+declare global {
+  interface Window {
+    __scrollRevealObserver?: IntersectionObserver;
+  }
+}
+
+const REVEAL_SELECTOR =
+  "section, h1, h2, h3, p, img, a:not(.fixed), button, li, [data-reveal]";
+
 export function ScrollReveal() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const styleId = "scroll-reveal-styles";
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement("style");
-      style.id = styleId;
-      style.textContent = `
-        .reveal {
-          opacity: 0;
-          transform: translateY(32px);
-          transition:
-            opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1),
-            transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
-          will-change: opacity, transform;
-        }
-        .reveal.visible {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      `;
-      document.head.appendChild(style);
-    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    // Disconnect previous observer first
-    const prev = (window as any).__scrollRevealObserver;
-    if (prev) prev.disconnect();
+    window.__scrollRevealObserver?.disconnect();
 
-    // Wait for new page DOM to render
-    const timeout = setTimeout(() => {
-      // Remove stale classes from previous page
-      document.querySelectorAll(".reveal, .visible").forEach((el) => {
-        el.classList.remove("reveal", "visible");
+    let frame = 0;
+    let observer: IntersectionObserver | undefined;
+
+    // Double-RAF: the second callback runs after React has committed this render, so
+    // adding classes here can no longer race hydration.
+    frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        document.querySelectorAll(".reveal, .visible").forEach((el) => {
+          el.classList.remove("reveal", "visible");
+        });
+
+        const elements = Array.from(
+          document.querySelectorAll<Element>(REVEAL_SELECTOR),
+        );
+        elements.forEach((el) => el.classList.add("reveal"));
+
+        observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              entry.target.classList.add("visible");
+              observer?.unobserve(entry.target);
+            });
+          },
+          { threshold: 0.08, rootMargin: "0px 0px -40px 0px" },
+        );
+
+        elements.forEach((el) => observer?.observe(el));
+        window.__scrollRevealObserver = observer;
       });
-
-      const elements = document.querySelectorAll<Element>(
-        "section, h1, h2, h3, p, img, a:not(.fixed), button, li, [data-reveal]"
-      );
-
-      elements.forEach((el) => el.classList.add("reveal"));
-
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              setTimeout(() => {
-                entry.target.classList.add("visible");
-              }, Math.random() * 80);
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.08, rootMargin: "0px 0px -40px 0px" }
-      );
-
-      elements.forEach((el) => observer.observe(el));
-      (window as any).__scrollRevealObserver = observer;
-    }, 120);
+    });
 
     return () => {
-      clearTimeout(timeout);
-      (window as any).__scrollRevealObserver?.disconnect();
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.__scrollRevealObserver = undefined;
     };
   }, [pathname]);
 

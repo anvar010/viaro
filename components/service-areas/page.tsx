@@ -6,7 +6,7 @@ import {
   MapPin,
   Phone,
 } from "lucide-react";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/SafeImage";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { locationsTestimonials } from "@/data/Tetimonials";
@@ -480,7 +480,7 @@ export default function LocationsContent() {
       >
         <div className="absolute inset-0">
           {" "}
-          <Image
+          <SafeImage
             src="/images/ImagenLocations1.png"
             alt="Luxury vehicle parked in front of a modern building"
             fill

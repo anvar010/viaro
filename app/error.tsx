@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 /** Root error boundary. Keeps the black/brand palette so a failure still looks like Viaro. */
@@ -33,7 +34,8 @@ export default function Error({
         <div className="mt-8 flex justify-center gap-3">
           <Button onClick={reset}>Try again</Button>
           <Button asChild variant="outline">
-            <a href="/">Back to home</a>
+            {/* next/link, not a bare anchor: an <a> forces a full document reload. */}
+            <Link href="/">Back to home</Link>
           </Button>
         </div>
       </div>
