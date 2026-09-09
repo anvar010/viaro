@@ -46,15 +46,38 @@ export async function exportReport(req: Request, res: Response): Promise<void> {
   });
 }
 
+/**
+ * An export belongs to whoever asked for it.
+ *
+ * Job ids are sequential integers, so without this check `/reports/exports/1..N` was an
+ * enumerable archive of every other role's reports — a company driver could read
+ * platform-wide admin earnings simply by counting up. Admins retain access to any job;
+ * everyone else gets only their own, and a job that isn't theirs is reported as missing
+ * rather than forbidden so the endpoint doesn't confirm which ids exist.
+ */
+function assertOwnsExport(
+  status: { owner?: { userId?: string } | null },
+  user: { userId: string; role: string },
+): void {
+  if (user.role === 'admin') return;
+  if (status.owner?.userId && String(status.owner.userId) === String(user.userId)) return;
+  throw ApiError.notFound('Export job not found');
+}
+
 export async function exportStatus(req: Request, res: Response): Promise<void> {
   const status = await getExportStatus(params<JobParam>(req).jobId);
   if (!status) throw ApiError.notFound('Export job not found');
-  res.json({ success: true, data: status });
+  assertOwnsExport(status, req.user!);
+
+  // `file` (absolute server path) and `owner` are deliberately not serialised.
+  const { file: _file, owner: _owner, ...safe } = status;
+  res.json({ success: true, data: safe });
 }
 
 export async function downloadExport(req: Request, res: Response): Promise<void> {
   const status = await getExportStatus(params<JobParam>(req).jobId);
   if (!status) throw ApiError.notFound('Export job not found');
+  assertOwnsExport(status, req.user!);
 
   if (status.state !== 'completed' || !status.file) {
     throw ApiError.conflict(`Export is '${status.state}' — not ready for download yet`);

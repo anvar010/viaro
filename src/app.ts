@@ -2,7 +2,7 @@ import express, { type Application, type Request, type Response } from 'express'
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import { env, isProduction, isTest } from './config/env';
+import { corsOptions, env, isProduction, isTest } from './config/env';
 import { APP_TIMEZONE, format, now } from './config/timezone';
 import { apiRateLimiter } from './middlewares/rateLimiter';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
@@ -30,12 +30,7 @@ const app: Application = express();
 app.set('trust proxy', 1); // behind nginx on the aaPanel VPS — needed for correct req.ip
 
 app.use(helmet());
-app.use(
-  cors({
-    origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN.split(',').map((o) => o.trim()),
-    credentials: true,
-  }),
-);
+app.use(cors(corsOptions()));
 /**
  * The raw request bytes are stashed before parsing because payment webhook signatures are
  * computed over the exact payload — re-serialising `req.body` changes whitespace and key

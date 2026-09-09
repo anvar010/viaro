@@ -1,9 +1,18 @@
 import { z } from 'zod';
-import { ROLES } from '../../utils/roles';
+
+/**
+ * Self-service registration is deliberately NOT `ROLES`.
+ *
+ * `admin` and `company` are privileged: an admin token passes every /admin/* guard, and a
+ * company owns a driver roster and a wallet. Accepting either here let anyone mint
+ * themselves those powers with one unauthenticated POST. Those accounts are created by
+ * seeding or by an admin, never by the public endpoint.
+ */
+export const PUBLIC_REGISTER_ROLES = ['customer', 'driver'] as const;
 
 export const registerSchema = z
   .object({
-    role: z.enum(ROLES),
+    role: z.enum(PUBLIC_REGISTER_ROLES),
     name: z.string().min(2).max(120),
     email: z.string().email().toLowerCase(),
     phone: z.string().min(6).max(30),

@@ -1,7 +1,13 @@
 import { z } from 'zod';
 import { REPORT_TYPES } from './reports.service';
+import { isParsableDate } from '../../config/timezone';
 
-const dateString = z.string().min(4).max(40);
+// Rejected at the edge as a 400 rather than throwing inside the export worker.
+const dateString = z
+  .string()
+  .min(4)
+  .max(40)
+  .refine(isParsableDate, { message: 'Not a valid ISO date' });
 
 export const reportRangeSchema = z.object({
   from: dateString.optional(),

@@ -1,4 +1,4 @@
-import { env } from '../config/env';
+import { env, isProduction } from '../config/env';
 import { logger } from '../utils/logger';
 
 /**
@@ -18,10 +18,16 @@ export async function sendEmail(message: EmailMessage): Promise<{ sent: boolean;
   const provider = (env.EMAIL_PROVIDER || '').toLowerCase();
 
   if (!provider || !env.EMAIL_API_KEY) {
+    /*
+     * `text` contains password-reset links — a one-click account takeover for anyone who
+     * can read the logs. Printed locally (where reading it from stdout is how you test
+     * the flow) and redacted in production, where no provider being configured is a
+     * misconfiguration rather than a workflow.
+     */
     logger.info('[email] no provider configured — message not sent', {
       to: message.to,
       subject: message.subject,
-      text: message.text,
+      ...(isProduction ? { text: '[redacted]' } : { text: message.text }),
     });
     return { sent: false, provider: provider || 'none' };
   }

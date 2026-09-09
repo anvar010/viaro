@@ -1,7 +1,7 @@
 import http from 'node:http';
 import { Server as SocketIOServer } from 'socket.io';
 import app from './app';
-import { env } from './config/env';
+import { corsOptions, env } from './config/env';
 import { collapseBullmqEvictionWarning } from './config/bullmqWarnings';
 import { connectMongo, disconnectMongo } from './config/db';
 import { connectRedis, disconnectRedis } from './config/redis';
@@ -25,12 +25,7 @@ export const httpServer = http.createServer(app);
  * Services reach it through sockets/io.ts rather than importing this module, which would
  * create a cycle (server -> app -> routes -> service -> server).
  */
-export const io = new SocketIOServer(httpServer, {
-  cors: {
-    origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN.split(',').map((o) => o.trim()),
-    credentials: true,
-  },
-});
+export const io = new SocketIOServer(httpServer, { cors: corsOptions() });
 
 export function getIo(): SocketIOServer {
   return io;

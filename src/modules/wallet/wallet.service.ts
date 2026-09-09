@@ -2,13 +2,15 @@ import { Types } from 'mongoose';
 import { Wallet, type WalletDocument, type WalletOwnerType } from '../../models/Wallet';
 import { Transaction, type TransactionType } from '../../models/Transaction';
 import { PaymentMethod } from '../../models/PaymentMethod';
-import { Trip } from '../../models/Trip';
+import { Trip, type TripDocument } from '../../models/Trip';
 import { Booking } from '../../models/Booking';
 import { Driver } from '../../models/Driver';
 import { Company } from '../../models/Company';
 import { User } from '../../models/User';
 import { env } from '../../config/env';
 import { ApiError } from '../../utils/ApiError';
+import { companyOwnsDriver } from '../../utils/roster';
+import type { AuthUser } from '../../middlewares/authGuard';
 import { pct, round2 } from '../../utils/money';
 import type { UserRole } from '../../utils/roles';
 import * as events from '../events/events.bus';
@@ -29,9 +31,17 @@ export async function getOrCreateWallet(
   ownerId: Types.ObjectId | string,
   ownerType: WalletOwnerType,
 ): Promise<WalletDocument> {
-  const existing = await Wallet.findOne({ ownerId, ownerType });
-  if (existing) return existing;
-  return Wallet.create({ ownerId, ownerType, balance: 0 });
+  /*
+   * Upsert rather than find-then-create: two concurrent settlements for the same owner
+   * both saw "no wallet" and both created one, which raced into a duplicate-key error
+   * that silently killed one settlement mid-way. `setOnInsert` never touches the balance
+   * of an existing wallet.
+   */
+  return Wallet.findOneAndUpdate(
+    { ownerId, ownerType },
+    { $setOnInsert: { ownerId, ownerType, balance: 0 } },
+    { new: true, upsert: true, setDefaultsOnInsert: true },
+  ) as unknown as Promise<WalletDocument>;
 }
 
 /**
@@ -43,9 +53,13 @@ export async function getOrCreateWallet(
  * ownerId, and created on first use.
  */
 export async function getPlatformWallet(): Promise<WalletDocument> {
-  const existing = await Wallet.findOne({ ownerType: 'platform', ownerId: null });
-  if (existing) return existing;
-  return Wallet.create({ ownerId: null, ownerType: 'platform', balance: 0 });
+  // Same upsert reasoning as getOrCreateWallet: every settlement touches this one wallet,
+  // so it is the single most contended find-then-create in the service.
+  return Wallet.findOneAndUpdate(
+    { ownerType: 'platform', ownerId: null },
+    { $setOnInsert: { ownerId: null, ownerType: 'platform', balance: 0 } },
+    { new: true, upsert: true, setDefaultsOnInsert: true },
+  ) as unknown as Promise<WalletDocument>;
 }
 
 /** Atomic credit: balance moves and the ledger row is written together. */
@@ -138,15 +152,42 @@ export async function resolveDriverOwner(driverId: Types.ObjectId | string): Pro
  * trip or a percentage of the owner's share.
  */
 export async function applyRevenueSplit(tripId: Types.ObjectId | string): Promise<void> {
-  const trip = await Trip.findById(tripId);
-  if (!trip) throw ApiError.notFound('Trip not found');
+  /*
+   * Claim the settlement before spending a penny.
+   *
+   * This used to read `trip.settled`, do all the crediting, and only then set the flag.
+   * Concurrent completions all read settled:false in that window and every one of them
+   * ran the full split, crediting the same fare several times over. Claiming the flag
+   * with a conditional update makes exactly one caller the settler; the rest match
+   * nothing and return without touching a wallet.
+   *
+   * The claim is taken first and released on failure, so a genuine error still leaves the
+   * trip re-settleable rather than stranded as "settled" with no money moved.
+   */
+  const trip = await Trip.findOneAndUpdate(
+    { _id: tripId, settled: { $ne: true } },
+    { $set: { settled: true } },
+    { new: true },
+  );
 
-  // Idempotency: /complete could be retried by a flaky mobile client.
-  if (trip.settled) {
+  if (!trip) {
+    const exists = await Trip.exists({ _id: tripId });
+    if (!exists) throw ApiError.notFound('Trip not found');
     logger.warn(`Revenue split skipped — trip ${String(tripId)} already settled`);
     return;
   }
 
+  try {
+    await settleClaimedTrip(trip);
+  } catch (err) {
+    // Release the claim so the retry path (or a manual re-run) can settle it properly.
+    await Trip.updateOne({ _id: trip._id }, { $set: { settled: false } }).catch(() => undefined);
+    throw err;
+  }
+}
+
+/** The actual money movement, once this caller has won the right to settle the trip. */
+async function settleClaimedTrip(trip: TripDocument): Promise<void> {
   const fare = round2(trip.fareAmount);
   const driver = await Driver.findById(trip.driverId);
   if (!driver) throw ApiError.notFound('Driver not found');
@@ -187,9 +228,7 @@ export async function applyRevenueSplit(tripId: Types.ObjectId | string): Promis
   }
 
   await creditDriverWallet(trip._id, owner, ownerShare);
-
-  trip.settled = true;
-  await trip.save();
+  // `settled` was already claimed atomically by applyRevenueSplit before any credit ran.
 }
 
 /** Resolves what this driver is owed for one trip, given their owner's share of it. */
@@ -345,6 +384,23 @@ export async function withdraw(userId: string, amount: number, destination?: str
   });
 
   // UML: "Withdraw Wallet Balance" «include» «system» Payment Gateway / Wallet.
+  /*
+   * The withdrawal fee is revenue, so it must land somewhere.
+   *
+   * It was deducted from the driver and then simply ceased to exist: no wallet was
+   * credited and no ledger row was written, so the platform's books were short by the fee
+   * on every withdrawal and the money could not be reconciled against anything. It
+   * belongs to the platform, the same place the admin's revenue share goes.
+   */
+  if (feeApplied > 0) {
+    await credit((await getPlatformWallet())._id, feeApplied, 'credit', {
+      reason: 'withdrawal_fee',
+      reference,
+      fromWalletId: wallet._id,
+      feePct: env.WITHDRAWAL_FEE_PCT,
+    });
+  }
+
   // Only the NET amount leaves the platform — the fee is retained.
   const payout = await payoutFromGateway({
     amount: netPayout,
@@ -364,6 +420,15 @@ export async function withdraw(userId: string, amount: number, destination?: str
       feeApplied: 0,
       meta: { reason: 'withdrawal_reversed', reference, provider: payout.provider },
     });
+
+    // The fee was taken for a payout that never happened — hand it back too, or the
+    // platform keeps a charge for a service it did not render.
+    if (feeApplied > 0) {
+      await debit((await getPlatformWallet())._id, feeApplied, 'debit', 0, {
+        reason: 'withdrawal_fee_reversed',
+        reference,
+      }).catch((err) => logger.error(`Could not reverse withdrawal fee for ${reference}`, err));
+    }
     throw new ApiError(402, 'Payout was declined by the payment gateway — your balance is unchanged');
   }
 
@@ -415,6 +480,22 @@ export async function applyRequestedCredit(tripId: Types.ObjectId | string): Pro
   const booking = await Booking.findById(trip.bookingId).lean();
   const requested = booking?.walletCreditRequested ?? 0;
   if (!booking || requested <= 0) return 0;
+
+  /*
+   * One booking intent, spent once.
+   *
+   * This is reachable from every path that creates or confirms a Trip — pool accept,
+   * favourite-driver auto-assign, admin dispatch — and none of them knew whether another
+   * had already run. A prior `ride_credit` row for this trip means the intent is spent,
+   * so re-running is a no-op rather than a second debit.
+   */
+  const alreadyApplied = await Transaction.findOne({
+    'meta.tripId': trip._id,
+    'meta.reason': 'ride_credit',
+  })
+    .select('_id')
+    .lean();
+  if (alreadyApplied) return 0;
 
   const wallet = await getOrCreateWallet(booking.customerId, 'customer');
   const outstanding = round2(trip.fareAmount - trip.creditApplied);
@@ -533,9 +614,21 @@ export async function releaseCredit(
  * Calls the PLACEHOLDER gateway and records the resulting ledger row against the
  * customer's wallet, so the money trail exists before a real provider is wired in.
  */
-export async function collectPayment(tripId: string) {
+export async function collectPayment(tripId: string, caller?: AuthUser) {
   const trip = await Trip.findById(tripId);
   if (!trip) throw ApiError.notFound('Trip not found');
+
+  /*
+   * A company may only charge for its own roster's trips.
+   *
+   * The route admits 'admin' and 'company', but the function took a bare tripId and
+   * checked nothing — so a company could bill a passenger for a ride run by a rival
+   * operator's chauffeur, taking real money on a trip it had no part in. Admin remains
+   * unrestricted; every other caller is refused.
+   */
+  if (caller?.role === 'company' && !(await companyOwnsDriver(caller.userId, trip.driverId))) {
+    throw ApiError.forbidden('That trip was not run by a driver on your roster');
+  }
 
   const booking = await Booking.findById(trip.bookingId).lean();
   if (!booking) throw ApiError.notFound('Booking not found');
@@ -569,28 +662,73 @@ export async function collectPayment(tripId: string) {
     };
   }
 
-  const gateway = await collectFromGateway({
-    amount: amountDue,
-    reference: String(trip._id),
-    description: `Viaro ${booking.tripType} trip`,
-  });
-
-  if (!gateway.success) throw new ApiError(402, 'Payment was declined by the gateway');
-
   const wallet = await getOrCreateWallet(booking.customerId, 'customer');
-  await Transaction.create({
-    walletId: wallet._id,
-    type: 'debit',
-    amount: amountDue,
-    feeApplied: 0,
-    meta: {
-      reason: 'trip_payment',
-      tripId: trip._id,
-      gatewayReference: gateway.gatewayReference,
-      provider: gateway.provider,
-      placeholder: gateway.placeholder,
+
+  /*
+   * Claim the right to charge BEFORE calling the gateway.
+   *
+   * The check above is necessary but not sufficient: two parallel Collect calls both read
+   * "not yet charged" and both went on to bill the card. Writing the ledger row first
+   * makes the unique partial index on {meta.tripId, reason:'trip_payment'} the arbiter —
+   * the loser's insert fails and it never reaches the gateway, so the customer cannot be
+   * double-charged no matter how the requests interleave.
+   */
+  let reservation;
+  try {
+    reservation = await Transaction.create({
+      walletId: wallet._id,
+      type: 'debit',
+      amount: amountDue,
+      feeApplied: 0,
+      meta: { reason: 'trip_payment', tripId: trip._id, status: 'pending' },
+    });
+  } catch (err) {
+    if ((err as { code?: number }).code === 11000) {
+      const existing = await Transaction.findOne({
+        'meta.tripId': trip._id,
+        'meta.reason': 'trip_payment',
+      }).lean();
+      return {
+        charged: 0,
+        alreadyCharged: true,
+        amount: round2(existing?.amount ?? amountDue),
+        reason: 'This fare has already been charged',
+        gateway: null,
+      };
+    }
+    throw err;
+  }
+
+  let gateway;
+  try {
+    gateway = await collectFromGateway({
+      amount: amountDue,
+      reference: String(trip._id),
+      description: `Viaro ${booking.tripType} trip`,
+    });
+  } catch (err) {
+    // The charge never happened, so the reservation must not survive to block a retry.
+    await Transaction.deleteOne({ _id: reservation._id }).catch(() => undefined);
+    throw err;
+  }
+
+  if (!gateway.success) {
+    await Transaction.deleteOne({ _id: reservation._id }).catch(() => undefined);
+    throw new ApiError(402, 'Payment was declined by the gateway');
+  }
+
+  // Settle the reservation into the real ledger row.
+  await Transaction.updateOne(
+    { _id: reservation._id },
+    {
+      $set: {
+        'meta.status': 'settled',
+        'meta.gatewayReference': gateway.gatewayReference,
+        'meta.provider': gateway.provider,
+        'meta.placeholder': gateway.placeholder,
+      },
     },
-  });
+  );
 
   return { charged: amountDue, gateway };
 }
@@ -671,7 +809,15 @@ export async function handleGatewayEvent(event: {
     case 'payment_intent.succeeded':
     case 'charge.succeeded': {
       if (!reference) break;
-      const existing = await Transaction.findOne({ 'meta.tripId': reference }).lean();
+      /*
+       * `meta.tripId` is stored as an ObjectId, and `reference` arrives from the gateway
+       * as a string — so this comparison never matched and every legitimate webhook was
+       * logged as "no matching transaction". Cast before querying, and ignore a reference
+       * that could not be a trip id at all.
+       */
+      const existing = Types.ObjectId.isValid(reference)
+        ? await Transaction.findOne({ 'meta.tripId': new Types.ObjectId(reference) }).lean()
+        : null;
       if (existing) {
         logger.info(`Gateway confirmed payment already recorded for trip ${reference}`);
       } else {
@@ -711,6 +857,28 @@ export async function useCredit(userId: string, tripId: string, amount: number) 
   if (!booking) throw ApiError.notFound('Booking not found');
   if (String(booking.customerId) !== userId) {
     throw ApiError.forbidden('You can only apply credit to your own trip');
+  }
+
+  /*
+   * Credit only goes onto a live, unpaid ride.
+   *
+   * Nothing checked the trip's state, so credit could be pushed onto a cancelled trip
+   * (money into a ride that will never run) or one already invoiced — `collectPayment`
+   * bills `fareAmount - creditApplied`, so applying credit after the charge simply
+   * destroys the balance without reducing anything.
+   */
+  if (trip.status === 'cancelled') {
+    throw ApiError.conflict('This trip was cancelled — credit cannot be applied to it');
+  }
+
+  const charged = await Transaction.findOne({
+    'meta.tripId': trip._id,
+    'meta.reason': 'trip_payment',
+  })
+    .select('_id')
+    .lean();
+  if (charged) {
+    throw ApiError.conflict('This fare has already been charged — credit can no longer be applied');
   }
 
   const outstanding = round2(trip.fareAmount - trip.creditApplied);

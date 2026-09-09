@@ -22,7 +22,19 @@ export async function updateProfile(userId: string, input: UpdateProfileInput) {
   if (!user) throw ApiError.notFound('User not found');
 
   if (input.name !== undefined) user.name = input.name;
-  if (input.phone !== undefined) user.phone = input.phone;
+
+  /*
+   * Changing the number un-verifies it.
+   *
+   * `phoneVerified` was left true across a phone change, so a user could verify one
+   * number they controlled and then swap in any other — carrying the verified badge onto
+   * a number that had never received an OTP, and defeating the point of the check.
+   */
+  if (input.phone !== undefined && input.phone !== user.phone) {
+    user.phone = input.phone;
+    user.phoneVerified = false;
+  }
+
   await user.save();
 
   if (input.vehicleClass !== undefined) {

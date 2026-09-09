@@ -5,6 +5,7 @@ import { hourOfDay, now, toAppTime, toDate, type DateInput } from '../../config/
 import { ApiError } from '../../utils/ApiError';
 import { round2 } from '../../utils/money';
 import * as vehicleService from '../vehicle/vehicle.service';
+import { collectPayment } from '../../integrations/paymentGateway';
 import type {
   CreatePricingRuleInput,
   CreateSubscriptionInput,
@@ -98,18 +99,60 @@ export async function calculateFare(opts: {
 
 /* ------------------------------ subscriptions ----------------------------- */
 
+/**
+ * The subscription catalogue — the ONLY source of a plan's price.
+ *
+ * Price used to arrive in the request body, so `{"plan":"free","price":0}` bought a real
+ * subscription for nothing and switched on the subscriber discount for every subsequent
+ * fare. A price the customer can name is not a price.
+ */
+export const SUBSCRIPTION_PLANS: Record<string, { label: string; price: number }> = {
+  monthly: { label: 'Viaro Monthly', price: 49 },
+  annual: { label: 'Viaro Annual', price: 499 },
+};
+
+export function listSubscriptionPlans() {
+  return Object.entries(SUBSCRIPTION_PLANS).map(([key, plan]) => ({
+    plan: key,
+    label: plan.label,
+    price: plan.price,
+  }));
+}
+
 export async function createSubscription(userId: string, input: CreateSubscriptionInput) {
   const active = await Subscription.findOne({ userId, status: 'active' }).lean();
   if (active) throw ApiError.conflict('You already have an active subscription');
 
+  const catalogue = SUBSCRIPTION_PLANS[input.plan.toLowerCase()];
+  if (!catalogue) {
+    throw ApiError.badRequest(
+      `Unknown plan '${input.plan}'. Choose one of: ${Object.keys(SUBSCRIPTION_PLANS).join(', ')}`,
+    );
+  }
+
+  /*
+   * Charge BEFORE activating.
+   *
+   * Activation is what grants the discount, so it must never happen on the strength of an
+   * unpaid request. A declined card leaves no subscription behind at all.
+   */
+  const charge = await collectPayment({
+    amount: catalogue.price,
+    reference: `subscription:${userId}:${Date.now()}`,
+    description: `Viaro ${catalogue.label} subscription`,
+  });
+
+  if (!charge.success) throw new ApiError(402, 'Payment for the subscription was declined');
+
   const startDate = now();
   return Subscription.create({
     userId,
-    plan: input.plan,
-    price: input.price,
+    plan: input.plan.toLowerCase(),
+    price: catalogue.price,
     status: 'active',
     startDate: toDate(startDate),
     renewalDate: toDate(startDate.plus({ months: 1 })),
+    paymentReference: charge.gatewayReference ?? null,
   });
 }
 

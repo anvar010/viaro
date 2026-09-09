@@ -11,6 +11,7 @@ import { paginated, toSkipLimit, type PaginationQuery } from '../../utils/pagina
 import { format, nowDate } from '../../config/timezone';
 import { round2 } from '../../utils/money';
 import { getOrCreateWallet } from '../wallet/wallet.service';
+import { driverRosterOwner } from '../../utils/roster';
 import type { CreateDriverInput, UpdateDriverInput } from './admin.validation';
 
 const BCRYPT_ROUNDS = 12;
@@ -29,8 +30,14 @@ export async function createDriver(companyUserId: string, input: CreateDriverInp
   let user = await User.findOne({ email: input.email });
 
   if (user) {
+    /*
+     * The message deliberately does not distinguish "this email is a customer" from
+     * "this email is an admin". The old wording confirmed that an address existed and
+     * what kind of account it was, which turned this endpoint into a user-enumeration
+     * oracle for anyone with a company login.
+     */
     if (user.role !== 'driver') {
-      throw ApiError.conflict('That email already belongs to a non-driver account');
+      throw ApiError.conflict('That email cannot be added as a driver');
     }
   } else {
     if (!input.password) {
@@ -60,6 +67,21 @@ export async function createDriver(companyUserId: string, input: CreateDriverInp
 
   const alreadyLinked = company.driverIds.some((id) => String(id) === String(driver._id));
   if (alreadyLinked) throw ApiError.conflict('This driver is already on your roster');
+
+  /*
+   * A driver already on someone's roster cannot be claimed by another company.
+   *
+   * Whoever owns a driver sets their payout terms (see updateDriver below), so silently
+   * re-rostering an existing driver handed a stranger control of that person's pay with
+   * no consent step anywhere. Onboarding someone else's driver is a business
+   * relationship, not a POST.
+   */
+  const existingOwner = await driverRosterOwner(driver._id);
+  if (existingOwner && String(existingOwner) !== String(company._id)) {
+    throw ApiError.conflict(
+      'That chauffeur is already on another operator’s roster and cannot be added here',
+    );
+  }
 
   company.driverIds.push(driver._id);
   await company.save();

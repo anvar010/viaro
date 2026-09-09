@@ -119,6 +119,15 @@ export async function resetPassword(token: string, newPassword: string) {
   // Single use.
   await redis.del(key);
 
+  /*
+   * A reset must end every existing session.
+   *
+   * The usual reason someone resets a password is that somebody else knows it. Without
+   * this, whoever was already signed in kept a valid refresh token for its full 30-day
+   * life — so the reset locked nobody out, which is the opposite of the point.
+   */
+  await revokeUserSessions(String(user._id));
+
   return { reset: true };
 }
 

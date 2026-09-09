@@ -109,6 +109,8 @@ export const MATRIX: MatrixEntry[] = [
     note: 'a signed-out visitor cannot be quoted — see FRONTEND-STATUS §4b',
   },
   { method: 'POST', path: '/subscriptions', allowed: ['customer'] },
+  // The plan catalogue: prices moved server-side, so customers read them from here.
+  { method: 'GET', path: '/subscriptions/plans', allowed: ['customer'] },
   { method: 'GET', path: '/subscriptions/me', allowed: ['customer'] },
   { method: 'DELETE', path: '/subscriptions/me', allowed: ['customer'] },
 
@@ -232,7 +234,8 @@ export const MATRIX: MatrixEntry[] = [
   { method: 'GET', path: '/admin/drivers/penalties', allowed: ['admin', 'company'] },
   { method: 'GET', path: '/admin/dashboard/bookings', allowed: ['admin'] },
   { method: 'GET', path: '/admin/dashboard/users', allowed: ['admin'] },
-  { method: 'GET', path: '/admin/revenue/subscriptions', allowed: ['admin', 'company'] },
+  // Platform subscription income — passenger revenue, not fleet revenue. Admin only.
+  { method: 'GET', path: '/admin/revenue/subscriptions', allowed: ['admin'] },
   { method: 'POST', path: '/admin/pricing/city', allowed: ['admin'] },
   { method: 'GET', path: '/admin/pricing/city', allowed: ['admin'] },
   { method: 'PATCH', path: '/admin/pricing/city/:id', allowed: ['admin'] },

@@ -54,6 +54,22 @@ export function errorHandler(
     statusCode = 409;
     message = 'Resource already exists';
     details = err.keyValue;
+  } else if (isClientError(err)) {
+    /*
+     * Errors that already carry their own 4xx status — body-parser's, chiefly.
+     *
+     * Malformed JSON and an oversized body are both the caller's doing, but they landed
+     * in the generic branch below and were reported as 500s: "request entity too large"
+     * claimed the server had failed when it had correctly refused a 2 MB payload. Honour
+     * the status the thrower already decided on.
+     */
+    statusCode = err.status;
+    message =
+      err.type === 'entity.too.large'
+        ? 'Request body is too large'
+        : err.type === 'entity.parse.failed'
+          ? 'Request body is not valid JSON'
+          : err.message;
   } else if (err instanceof Error) {
     message = isProduction ? 'Internal server error' : err.message;
   }
@@ -67,6 +83,19 @@ export function errorHandler(
   if (!isProduction && err instanceof Error) body.stack = err.stack;
 
   res.status(statusCode).json(body);
+}
+
+/**
+ * An error that already knows it is the client's fault.
+ *
+ * express/body-parser attach `status` (and a `type` discriminator) to their own errors;
+ * anything claiming a 4xx here is trusted, while a 5xx keeps falling through to the
+ * generic handler so an internal failure can never mask itself as a client error.
+ */
+function isClientError(err: unknown): err is { status: number; message: string; type?: string } {
+  if (typeof err !== 'object' || err === null) return false;
+  const status = (err as { status?: unknown; statusCode?: unknown }).status;
+  return typeof status === 'number' && status >= 400 && status < 500;
 }
 
 function isDuplicateKeyError(err: unknown): err is { code: number; keyValue: unknown } {

@@ -6,6 +6,7 @@ import { PenaltyEvent } from '../../models/PenaltyEvent';
 import { redis } from '../../config/redis';
 import { format, now, toDate } from '../../config/timezone';
 import { ApiError } from '../../utils/ApiError';
+import type { UserRole } from '../../utils/roles';
 import { logger } from '../../utils/logger';
 import * as events from '../events/events.bus';
 import * as walletService from '../wallet/wallet.service';
@@ -405,23 +406,39 @@ async function hasActivePenalty(driverId: string): Promise<boolean> {
   return count > 0;
 }
 
-/** GET /admin/dispatch/pool — ops visibility into unclaimed bookings (spec §4.4). */
-export async function listDispatchPool(q: PaginationQuery) {
+/**
+ * The unclaimed-booking pool, for ops (`/admin/dispatch/pool`) and for drivers
+ * (`/dispatch/pool`).
+ *
+ * The two audiences do NOT get the same document. Ops triages by person and needs the
+ * rider's name and number; a driver is deciding whether to claim a job and needs the
+ * route, the time and the money. Serving one payload to both handed every driver on the
+ * platform a directory of customer names and phone numbers for rides they had not taken
+ * and might never take — and the driver who does claim it gets the contact details at
+ * assignment anyway, which is the point at which they actually need them.
+ */
+export async function listDispatchPool(q: PaginationQuery, role: UserRole = 'admin') {
   const { skip, limit } = toSkipLimit(q);
   const filter = { status: 'dispatched' as const };
 
-  const [items, total] = await Promise.all([
-    Booking.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate({ path: 'customerId', select: 'name phone' })
-      .lean(),
-    Booking.countDocuments(filter),
-  ]);
+  const showCustomerContact = role !== 'driver';
+
+  const findQuery = Booking.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit);
+  if (showCustomerContact) {
+    findQuery.populate({ path: 'customerId', select: 'name phone' });
+  }
+
+  const [items, total] = await Promise.all([findQuery.lean(), Booking.countDocuments(filter)]);
 
   return paginated(
-    items.map((b) => ({ ...b, scheduledAtLocal: format(b.scheduledAt) })),
+    items.map((b) => {
+      const row = { ...b, scheduledAtLocal: format(b.scheduledAt) };
+      if (!showCustomerContact) {
+        // The id stays (a driver's claim posts against it); the person does not.
+        delete (row as Record<string, unknown>).customerId;
+      }
+      return row;
+    }),
     total,
     q,
   );

@@ -2,7 +2,7 @@ import type { Job } from 'bullmq';
 import { Booking } from '../models/Booking';
 import { getQueue, registerWorker, QUEUE_NAMES } from './queues';
 import { REFUND_THRESHOLD_HOURS } from '../modules/cancellation/cancellation.service';
-import { format, hoursUntil, toAppTime } from '../config/timezone';
+import { format, hoursUntil, now, toAppTime } from '../config/timezone';
 import { logger } from '../utils/logger';
 import * as notify from '../modules/notifications/notifications.service';
 import { NOTIFICATION_TYPES } from '../modules/notifications/notifications.service';
@@ -31,7 +31,9 @@ export async function scheduleCancellationWindowCheck(
 ): Promise<void> {
   const thresholdHours = REFUND_THRESHOLD_HOURS[tripType];
   const boundary = toAppTime(scheduledAt).minus({ hours: thresholdHours });
-  const delayMs = boundary.diff(toAppTime(new Date()), 'milliseconds').milliseconds;
+  // `now()` is the app-timezone helper; toAppTime(new Date()) was the long way round to
+  // the same thing and the one place this file bypassed the rule.
+  const delayMs = boundary.diff(now(), 'milliseconds').milliseconds;
 
   // Booked inside the window already — there is no free-cancellation period to warn about.
   if (delayMs <= 0) return;

@@ -7,6 +7,7 @@ import {
   applyTripCancellationActor,
   recordBookingCancellation,
 } from '../booking/booking.cancellation';
+import { issueRefundToWallet } from '../cancellation/cancellation.service';
 import { Driver, type DriverDocument } from '../../models/Driver';
 import { Rating } from '../../models/Rating';
 import { PenaltyEvent } from '../../models/PenaltyEvent';
@@ -24,6 +25,7 @@ import * as flightService from '../flight/flight.service';
 import * as notify from '../notifications/notifications.service';
 import { NOTIFICATION_TYPES } from '../notifications/notifications.service';
 import type { ChangeLocationInput, RateInput } from './trip.validation';
+import { companyDriverIds, companyOwnsDriver } from '../../utils/roster';
 import {
   canSeeDriverPhone,
   stripFareIfHidden,
@@ -45,7 +47,8 @@ export const MASKED_PHONE = MASKED;
  * enforces exactly the same rule:
  *   customer -> must own the linked booking
  *   driver   -> must be the assigned driver
- *   admin/company -> unrestricted
+ *   company  -> the trip's driver must be on that company's roster
+ *   admin    -> unrestricted
  */
 export async function assertTripAccess(
   trip: TripDocument,
@@ -64,7 +67,19 @@ export async function assertTripAccess(
     return;
   }
 
-  // admin and company: no ownership restriction (spec §2 RBAC matrix).
+  /*
+   * A company was previously treated as an admin here, so fixing only the trip LIST would
+   * have left `GET /trips/:id` as an unscoped read of any trip by id — the same leak
+   * through a narrower door. A company sees a trip only when it ran on its own roster.
+   */
+  if (user.role === 'company') {
+    if (!(await companyOwnsDriver(user.userId, trip.driverId))) {
+      throw ApiError.forbidden('That trip was not run by a driver on your roster');
+    }
+    return;
+  }
+
+  // admin: no ownership restriction (spec §2 RBAC matrix).
 }
 
 /** Resolves the driver's User id once, so ownership checks don't re-query per call site. */
@@ -160,10 +175,30 @@ export async function acceptBooking(id: string, userId: string) {
     if (String(existing.driverId) !== String(driver._id)) {
       throw ApiError.conflict('This ride has already been claimed by another driver');
     }
-    existing.timestamps.accepted = toDate(now());
-    await existing.save();
-    await afterAccept(existing, booking, driver);
-    return existing;
+
+    /*
+     * Accepting is not idempotent — afterAccept() spends the passenger's requested wallet
+     * credit. Without this guard the same trip could be accepted repeatedly (by booking
+     * id, then by trip id) and each call debited the credit again, walking an $80 balance
+     * to zero on a single ride. A confirmed trip is a 409, not a second settlement.
+     */
+    if (existing.timestamps.accepted) {
+      throw ApiError.conflict('This ride has already been accepted');
+    }
+
+    /*
+     * Claim the acceptance atomically for the same reason /complete does: two parallel
+     * confirmations both read "not yet accepted" otherwise.
+     */
+    const claimed = await Trip.findOneAndUpdate(
+      { _id: existing._id, 'timestamps.accepted': { $exists: false } },
+      { $set: { 'timestamps.accepted': toDate(now()) } },
+      { new: true },
+    );
+    if (!claimed) throw ApiError.conflict('This ride has already been accepted');
+
+    await afterAccept(claimed, booking, driver);
+    return claimed;
   }
 
   if (booking.status !== 'dispatched') {
@@ -242,6 +277,14 @@ export async function listTripsForUser(
   } else if (user.role === 'customer') {
     const bookings = await Booking.find({ customerId: user.userId }).select('_id').lean();
     filter.bookingId = { $in: bookings.map((b) => b._id) };
+  } else if (user.role === 'company') {
+    /*
+     * A company is NOT an admin. Without this branch a company token fell through with an
+     * empty filter and read every trip on the platform — other companies' fares, other
+     * customers' pickup addresses. Scope it to its own roster, the same source of truth
+     * admin.service.ts already uses for the driver-list and driver-edit endpoints.
+     */
+    filter.driverId = { $in: await companyDriverIds(user.userId) };
   }
 
   const { skip, limit } = toSkipLimit(q);
@@ -322,23 +365,34 @@ export async function getTripForUser(tripId: string, user: AuthUser): Promise<Sh
 }
 
 export async function startTrip(tripId: string, userId: string) {
-  const trip = await loadTrip(tripId);
-  await assertDriverOwnsTrip(trip, userId);
+  const loaded = await loadTrip(tripId);
+  await assertDriverOwnsTrip(loaded, userId);
 
-  if (trip.status !== 'accepted') {
-    throw ApiError.conflict(`Trip is '${trip.status}' and cannot be started`);
+  /*
+   * Same conditional-update lock as completeTrip.
+   *
+   * Read-modify-write here does not lose money, but two taps of "Start" both passed the
+   * status check and both notified the passenger that their trip had begun — and the
+   * second overwrote the recorded start time, which the trip timeline is built from.
+   */
+  const startedAt = toDate(now());
+  const trip = await Trip.findOneAndUpdate(
+    { _id: loaded._id, status: 'accepted' },
+    { $set: { status: 'started', 'timestamps.started': startedAt } },
+    { new: true },
+  );
+
+  if (!trip) {
+    const current = await Trip.findById(tripId).lean();
+    throw ApiError.conflict(`Trip is '${current?.status ?? 'unknown'}' and cannot be started`);
   }
-
-  trip.status = 'started';
-  trip.timestamps.started = toDate(now());
-  await trip.save();
 
   const booking = await Booking.findById(trip.bookingId).lean();
   if (booking) {
     await notify.send(booking.customerId, NOTIFICATION_TYPES.TRIP_STARTED, {
       message: 'Your trip has started',
       tripId: String(trip._id),
-      startedAt: format(trip.timestamps.started),
+      startedAt: format(startedAt),
     });
   }
 
@@ -348,16 +402,30 @@ export async function startTrip(tripId: string, userId: string) {
 }
 
 export async function completeTrip(tripId: string, userId: string) {
-  const trip = await loadTrip(tripId);
-  const driver = await assertDriverOwnsTrip(trip, userId);
+  const loaded = await loadTrip(tripId);
+  const driver = await assertDriverOwnsTrip(loaded, userId);
 
-  if (trip.status !== 'started') {
-    throw ApiError.conflict(`Trip is '${trip.status}' and cannot be completed`);
+  /*
+   * The status transition IS the lock.
+   *
+   * This was previously read-modify-write: check `status === 'started'`, then save.
+   * Five concurrent /complete calls all read 'started' before any of them wrote, so all
+   * five passed the check and all five went on to settle the fare — a $100 trip paid out
+   * four times over. Making the state change a single conditional update means exactly
+   * one request can move the trip out of 'started'; the losers match nothing.
+   */
+  const completedAt = toDate(now());
+  const trip = await Trip.findOneAndUpdate(
+    { _id: loaded._id, status: 'started' },
+    { $set: { status: 'completed', 'timestamps.completed': completedAt } },
+    { new: true },
+  );
+
+  if (!trip) {
+    // Lost the race, or was never startable. Re-read for the caller-facing reason.
+    const current = await Trip.findById(tripId).lean();
+    throw ApiError.conflict(`Trip is '${current?.status ?? 'unknown'}' and cannot be completed`);
   }
-
-  trip.status = 'completed';
-  trip.timestamps.completed = toDate(now());
-  await trip.save();
 
   driver.status = 'available';
   await driver.save();
@@ -377,7 +445,7 @@ export async function completeTrip(tripId: string, userId: string) {
       message: 'Your trip is complete',
       tripId: String(trip._id),
       fare: round2(trip.fareAmount),
-      completedAt: format(trip.timestamps.completed),
+      completedAt: format(completedAt),
     });
   }
 
@@ -446,6 +514,21 @@ export async function cancelTripByDriver(tripId: string, userId: string, reason?
     });
     applyTripCancellationActor(trip, record);
     await Promise.all([booking.save(), trip.save()]);
+
+    /*
+     * The passenger is not at fault, so they get everything back.
+     *
+     * This path never touched the money: any wallet credit already applied to the ride
+     * (and any fare collected) simply stayed spent on a trip that never ran. The
+     * customer-initiated path has always reconciled this; a cancellation by the chauffeur
+     * is the one case where a 100% refund is unambiguous.
+     */
+    try {
+      await issueRefundToWallet(String(trip._id), 100);
+    } catch (err) {
+      logger.error(`Refund failed for driver-cancelled trip ${String(trip._id)}`, err);
+    }
+
     publishTripChange('cancelled', trip, {
       customerId: booking.customerId,
       driverUserId: userId,
@@ -695,6 +778,14 @@ export async function adminSetTripStatus(
       });
       applyTripCancellationActor(trip, record);
       await Promise.all([booking.save(), trip.save()]);
+
+      // Same reasoning as the driver-cancelled path: operations cancelled it, so the
+      // passenger keeps none of the cost.
+      try {
+        await issueRefundToWallet(String(trip._id), 100);
+      } catch (err) {
+        logger.error(`Refund failed for admin-cancelled trip ${String(trip._id)}`, err);
+      }
     }
     await notify.send(
       booking.customerId,

@@ -5,6 +5,7 @@ import { Driver } from '../models/Driver';
 import { socketAuthMiddleware } from './socketAuth';
 import { nsPattern } from './io';
 import { logger } from '../utils/logger';
+import { companyOwnsDriver } from '../utils/roster';
 import * as tripService from '../modules/trip/trip.service';
 import { locationUpdateSchema } from '../modules/dispatch/dispatch.validation';
 import { now, toISO } from '../config/timezone';
@@ -41,6 +42,17 @@ export function attachTrackingNamespace(io: SocketIOServer): void {
         if (!driver || String(driver.userId) !== user.userId) {
           return next(new Error('This trip is assigned to another driver'));
         }
+      }
+
+      /*
+       * A company may watch only its own roster's trips.
+       *
+       * The namespace had no company branch, so a company token could join the live
+       * tracking room for ANY trip on the platform and follow another operator's vehicle
+       * in real time — the socket-side twin of the REST leak in listTripsForUser.
+       */
+      if (user.role === 'company' && !(await companyOwnsDriver(user.userId, trip.driverId))) {
+        return next(new Error('That trip was not run by a driver on your roster'));
       }
 
       socket.data.tripId = tripId;

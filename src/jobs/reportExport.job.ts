@@ -32,10 +32,22 @@ export async function getExportStatus(jobId: string) {
   if (!job) return null;
 
   const state = await job.getState();
+  const file = (job.returnvalue as { file?: string } | undefined)?.file ?? null;
+  const owner = (job.data as ReportExportJobData | undefined)?.user ?? null;
+
   return {
     jobId,
     state,
-    file: (job.returnvalue as { file?: string } | undefined)?.file ?? null,
+    /**
+     * Absolute server path — for the controller's own use only.
+     *
+     * It must never be serialised to a client: it disclosed the deployment's directory
+     * layout in every status response. The controller strips it and answers with `ready`.
+     */
+    file,
+    ready: Boolean(file),
+    /** Who asked for this export, so the controller can refuse everyone else. */
+    owner,
     failedReason: job.failedReason ?? null,
   };
 }
@@ -78,9 +90,20 @@ export function toCsv(rows: Record<string, unknown>[]): string {
 
   // Union of keys — rows of mixed kinds (cancellations + penalties) stay aligned.
   const headers = [...new Set(rows.flatMap((r) => Object.keys(r)))];
+  /*
+   * Spreadsheet formula injection.
+   *
+   * Quoting alone is not enough: Excel and Sheets treat a cell whose text begins with
+   * = + - @ (or a leading tab/CR before one) as a formula, so a rider typing
+   * `=HYPERLINK(...)` into a free-text cancellation reason gets it executed inside an
+   * operator's spreadsheet. A leading single quote neutralises the cell while keeping it
+   * readable.
+   */
+  const NEUTRALISE = /^[=+\-@\t\r]/;
   const escape = (value: unknown): string => {
     if (value === null || value === undefined) return '';
-    const str = String(value);
+    let str = String(value);
+    if (NEUTRALISE.test(str)) str = `'${str}`;
     return /[",\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
   };
 

@@ -17,6 +17,8 @@ import { paginated, toSkipLimit, type PaginationQuery } from '../../utils/pagina
  */
 export const NOTIFICATION_TYPES = {
   BOOKING_CREATED: 'booking.created',
+  /** An amendment changed what the ride will cost — the customer is told the new figure. */
+  BOOKING_REPRICED: 'booking.repriced',
   DRIVER_ASSIGNED: 'trip.driver_assigned',
   RIDE_OFFER: 'dispatch.ride_offer',
   TRIP_STARTED: 'trip.started',

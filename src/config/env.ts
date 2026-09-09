@@ -11,7 +11,17 @@ dotenv.config({ quiet: true });
  * SMS/push and S3 is not chosen yet (spec §10), so the app must boot without them.
  */
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  /**
+   * Deliberately NOT defaulted.
+   *
+   * It used to fall back to 'development', so a deployment that simply forgot to set it
+   * ran with development semantics in production — stack traces and absolute file paths
+   * in every 500 response, and a permissive CORS policy. Failing to boot is a far better
+   * outcome than silently serving internals, and the value is trivial to supply.
+   */
+  NODE_ENV: z.enum(['development', 'test', 'production'], {
+    message: "NODE_ENV must be set explicitly to 'development', 'test' or 'production'",
+  }),
   PORT: z.coerce.number().int().positive().default(5000),
 
   MONGO_URI: z.string().min(1, 'MONGO_URI is required'),
@@ -108,4 +118,33 @@ if (!parsed.success) {
 export const env: Env = parsed.data;
 
 export const isProduction = env.NODE_ENV === 'production';
+
+/**
+ * CORS policy, derived once and shared by the HTTP app and the socket server.
+ *
+ * `CORS_ORIGIN='*'` used to become `origin: true`, which reflects the caller's own Origin
+ * header back — and paired with `credentials: true` that is an allow-any-site-with-
+ * credentials policy, exactly what the same-origin policy exists to prevent. Bearer
+ * tokens limit the damage today, but the refresh cookie the consoles use is precisely the
+ * kind of credential this would expose.
+ *
+ * A wildcard is therefore refused outright in production, and everywhere else it is
+ * honoured only WITHOUT credentials — the combination the CORS spec itself forbids.
+ */
+export function corsOptions(): { origin: true | string[]; credentials: boolean } {
+  const wildcard = env.CORS_ORIGIN.trim() === '*';
+
+  if (wildcard && env.NODE_ENV === 'production') {
+    throw new Error(
+      "CORS_ORIGIN must list explicit origins in production — '*' with credentials is unsafe",
+    );
+  }
+
+  if (wildcard) return { origin: true, credentials: false };
+
+  return {
+    origin: env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean),
+    credentials: true,
+  };
+}
 export const isTest = env.NODE_ENV === 'test';

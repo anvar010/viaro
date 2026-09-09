@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { env } from '../config/env';
 import { redis } from '../config/redis';
@@ -116,6 +117,16 @@ export function createRateLimiter(options: RateLimiterOptions = {}): RequestHand
       res.setHeader('RateLimit-Reset', String(Math.ceil(((windowId + 1) * windowMs - Date.now()) / 1000)));
 
       if (hits > max) {
+        /*
+         * RFC 6585 says a 429 SHOULD say when to come back. Without it a client has no
+         * basis for a backoff interval and the usual outcome is an immediate retry loop,
+         * which makes the overload worse — the header costs nothing and is already
+         * computed for RateLimit-Reset above.
+         */
+        res.setHeader(
+          'Retry-After',
+          String(Math.max(1, Math.ceil(((windowId + 1) * windowMs - Date.now()) / 1000))),
+        );
         next(ApiError.tooManyRequests(message));
         return;
       }
@@ -132,8 +143,49 @@ export function createRateLimiter(options: RateLimiterOptions = {}): RequestHand
   };
 }
 
+/**
+ * Per-user where possible, per-IP otherwise.
+ *
+ * `req.user` alone was not enough: the global limiter in app.ts is mounted BEFORE any
+ * route's authGuard runs, so `req.user` was always undefined there and every
+ * authenticated request fell back to its IP — which lumps a whole office or mobile
+ * carrier NAT into one bucket, and lets one user behind many addresses spread their load.
+ *
+ * Reading the subject straight from the bearer token fixes the ordering problem without
+ * moving the limiter behind auth (where unauthenticated floods would stop being limited).
+ * The token is NOT verified here: a forged one only changes which bucket the request is
+ * counted in, and authGuard still rejects it moments later. Falling back to a hash keeps
+ * a malformed token from becoming its own unlimited bucket.
+ */
 function defaultKeyGenerator(req: Request): string {
-  return req.user?.userId ?? req.ip ?? 'anonymous';
+  if (req.user?.userId) return `u:${req.user.userId}`;
+
+  const header = req.headers.authorization;
+  if (typeof header === 'string' && header.toLowerCase().startsWith('bearer ')) {
+    const token = header.slice(7).trim();
+    const payload = decodeJwtSubject(token);
+    if (payload) return `u:${payload}`;
+    if (token) return `t:${createHash('sha256').update(token).digest('hex').slice(0, 32)}`;
+  }
+
+  return `ip:${req.ip ?? 'anonymous'}`;
+}
+
+/** Reads `userId` out of a JWT payload without verifying it — see defaultKeyGenerator. */
+function decodeJwtSubject(token: string): string | null {
+  const parts = token.split('.');
+  if (parts.length !== 3 || !parts[1]) return null;
+
+  try {
+    const json = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as {
+      userId?: unknown;
+      sub?: unknown;
+    };
+    const id = json.userId ?? json.sub;
+    return typeof id === 'string' && id ? id : null;
+  } catch {
+    return null;
+  }
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {

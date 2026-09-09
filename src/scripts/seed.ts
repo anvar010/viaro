@@ -27,18 +27,20 @@ import { PaymentMethod } from '../models/PaymentMethod';
 import * as authService from '../modules/auth/auth.service';
 import * as walletService from '../modules/wallet/wallet.service';
 import { now, toDate } from '../config/timezone';
+import { env } from '../config/env';
 import { logger } from '../utils/logger';
 
 /**
  * Test-account password.
  *
- * Note it is 7 characters, which is SHORTER than the 8-character minimum
- * auth.validation.ts enforces on POST /auth/register. That is not a mistake and not a
- * loophole: the seed calls authService.register() directly, and the length rule lives in
- * route middleware, so it never runs here. Signing up through the API or the UI still
- * requires 8+ characters — this shortcut exists only for local test accounts.
+ * It must satisfy the SAME 8-character minimum auth.validation.ts enforces on
+ * POST /auth/register. It used to be 7 characters, which worked here (the seed calls
+ * authService.register() directly, bypassing the route middleware that carries the rule)
+ * but broke every consumer that signed in through the real endpoint — it was the direct
+ * cause of 10 of the 11 failing Postman assertions. Seed data that cannot log in through
+ * the public API is seed data that tests nothing.
  */
-export const SEED_PASSWORD = 'test123';
+export const SEED_PASSWORD = 'test1234';
 export const SEED_CITY = 'los angeles';
 
 /**
@@ -295,11 +297,36 @@ export async function seed(): Promise<void> {
   console.log('  platformDriverId:', String(platformDriver._id));
 }
 
+/**
+ * Refuses to run against a production database.
+ *
+ * Both modes are destructive — `seed` calls `clean()` first, and `clean` issues
+ * deleteMany across users, bookings, trips, wallets and pricing. Nothing stopped this
+ * being pointed at a live deployment with the wrong MONGO_URI in the shell, and the
+ * damage would be immediate and unrecoverable. VIARO_ALLOW_DESTRUCTIVE_SEED=yes exists
+ * as a deliberate, hard-to-type escape hatch for restoring a staging box.
+ */
+function assertNotProduction(mode: string): void {
+  if (env.NODE_ENV !== 'production') return;
+  if (process.env.VIARO_ALLOW_DESTRUCTIVE_SEED === 'yes') {
+    logger.warn(`Running destructive '${mode}' against a PRODUCTION environment — override set`);
+    return;
+  }
+
+  throw new Error(
+    `Refusing to run '${mode}' with NODE_ENV=production: this deletes accounts, bookings, ` +
+      'trips and wallets. Set VIARO_ALLOW_DESTRUCTIVE_SEED=yes only if that is genuinely intended.',
+  );
+}
+
 async function main(): Promise<void> {
+  const requestedMode = process.argv[2] === 'clean' ? 'clean' : 'seed';
+  assertNotProduction(requestedMode);
+
   await connectMongo();
   await connectRedis();
 
-  const mode = process.argv[2] === 'clean' ? 'clean' : 'seed';
+  const mode = requestedMode;
   if (mode === 'clean') await clean();
   else await seed();
 

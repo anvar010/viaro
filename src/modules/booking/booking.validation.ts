@@ -1,6 +1,59 @@
 import { z } from 'zod';
 import { TRIP_TYPES } from '../../models/Booking';
 import { paginationSchema } from '../../utils/pagination';
+import { isParsableDate, now, toAppTime } from '../../config/timezone';
+
+/**
+ * A pickup time that is real, and in the future.
+ *
+ * Two separate problems lived on the old `z.string().min(4)`:
+ *   - unparsable text reached `toAppTime`, which throws a bare Error -> a 500 on what is
+ *     plainly a bad request;
+ *   - a date in the past was accepted, so `scheduledAt:"2020-01-01"` created a pending
+ *     booking and broadcast it to the dispatch pool for a ride that could never happen.
+ *
+ * MIN_LEAD_MINUTES gives dispatch a moment to actually find a chauffeur, and absorbs
+ * clock skew between a client and the server.
+ */
+export const MIN_LEAD_MINUTES = 5;
+
+/*
+ * One superRefine, not a chain of refines.
+ *
+ * zod runs every `.refine()` in a chain even after an earlier one has already failed, so
+ * a chained parse-check could not protect the later rules: `toAppTime('notadate')` still
+ * ran and threw, producing the very 500 this schema exists to prevent. `superRefine`
+ * lets the parse check short-circuit with an explicit early return.
+ */
+const futureDateString = z
+  .string()
+  .min(4)
+  .superRefine((value, ctx) => {
+    if (!isParsableDate(value)) {
+      ctx.addIssue({ code: 'custom', message: 'Not a valid ISO date' });
+      return;
+    }
+
+    const at = toAppTime(value);
+
+    if (at < now().minus({ minutes: 1 })) {
+      ctx.addIssue({ code: 'custom', message: 'Pickup time cannot be in the past' });
+      return;
+    }
+
+    if (at < now().plus({ minutes: MIN_LEAD_MINUTES }).minus({ minutes: 1 })) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `Schedule a pickup at least ${MIN_LEAD_MINUTES} minutes ahead`,
+      });
+    }
+  });
+
+/** A date that must merely be parsable (flight arrivals can legitimately be in the past). */
+const anyDateString = z
+  .string()
+  .min(4)
+  .refine(isParsableDate, { message: 'Not a valid ISO date' });
 
 const geoPointSchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
@@ -24,12 +77,12 @@ export const createBookingSchema = z
     walletCreditRequested: z.coerce.number().min(0).max(1_000_000).optional(),
 
     /** ISO string; offset-less values are read as America/Los_Angeles wall time. */
-    scheduledAt: z.string().min(4).optional(),
+    scheduledAt: futureDateString.optional(),
     hours: z.coerce.number().min(1).max(24).optional(),
     flightDetails: z
       .object({
         flightNumber: z.string().min(2).max(10),
-        scheduledArrival: z.string().min(4).optional(),
+        scheduledArrival: anyDateString.optional(),
       })
       .optional(),
     favoriteDriverId: z.string().regex(/^[a-fA-F0-9]{24}$/).optional(),
@@ -52,7 +105,8 @@ export const updateBookingSchema = z
     pickup: geoPointSchema.optional(),
     drop: geoPointSchema.optional(),
     vehicleClass: z.string().min(1).max(60).optional(),
-    scheduledAt: z.string().min(4).optional(),
+    // Rescheduling is still a pickup time: the same future-dated rule applies.
+    scheduledAt: futureDateString.optional(),
     /** Change or clear (0) the credit the passenger wants put towards this ride. */
     walletCreditRequested: z.coerce.number().min(0).max(1_000_000).optional(),
   })

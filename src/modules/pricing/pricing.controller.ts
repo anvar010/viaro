@@ -17,6 +17,11 @@ export async function createSubscription(req: Request, res: Response): Promise<v
   res.status(201).json({ success: true, data });
 }
 
+/** The plans a customer may buy, with their server-side prices. */
+export async function listSubscriptionPlans(_req: Request, res: Response): Promise<void> {
+  res.json({ success: true, data: pricingService.listSubscriptionPlans() });
+}
+
 export async function getMySubscription(req: Request, res: Response): Promise<void> {
   const data = await pricingService.getMySubscription(req.user!.userId);
   res.json({ success: true, data });

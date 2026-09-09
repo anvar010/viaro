@@ -2,16 +2,19 @@
  * REPORT VISIBILITY — named business rule from the spec (§8 rule 7), not an incidental
  * default:
  *
- *   driver          -> sees ONLY their own trips, earnings and penalties
- *   admin, company  -> see the full/aggregate picture
+ *   driver   -> sees ONLY their own trips, earnings and penalties
+ *   company  -> sees only the drivers on its OWN roster
+ *   admin    -> sees the full/aggregate picture
  *
  * Every query in this file goes through buildScope() so that rule is applied in exactly
  * one place. If a new report is added, it must use buildScope() too.
  *
- * NOTE for Anvar: the spec grants 'company' full visibility, i.e. a company can see
- * trips belonging to drivers it does not employ. If Viaro ever onboards competing
- * operators, narrow the company branch of buildScope() to its own driverIds — that is the
- * only line that would need to change.
+ * The company branch used to return an unrestricted scope, on the reading that the spec
+ * granted operators full visibility. That is no longer tenable: the platform hosts
+ * competing operators, so it meant any company could pull every rival's completed trips,
+ * fares, earnings and penalties out of the reports endpoints — and export them to CSV.
+ * It also contradicted the roster scoping this codebase already enforces on the driver
+ * list, the trip list and live tracking. A company's reports now cover its own roster.
  */
 // Mongoose 9 renamed FilterQuery -> QueryFilter.
 import { Types, type QueryFilter } from 'mongoose';
@@ -23,6 +26,7 @@ import { Wallet } from '../../models/Wallet';
 import { PenaltyEvent } from '../../models/PenaltyEvent';
 import type { AuthUser } from '../../middlewares/authGuard';
 import { ApiError } from '../../utils/ApiError';
+import { companyDriverIds } from '../../utils/roster';
 import { endOfDay, startOfDay, toDate, format } from '../../config/timezone';
 import { round2 } from '../../utils/money';
 
@@ -32,7 +36,10 @@ export interface ReportRange {
 }
 
 export interface ReportScope {
-  driverId: Types.ObjectId | null; // null => unrestricted (admin/company)
+  /** A single driver (driver role), or null when not restricted to one. */
+  driverId: Types.ObjectId | null;
+  /** The roster a company is limited to; null for driver and admin. */
+  driverIds: Types.ObjectId[] | null;
   userId: string;
 }
 
@@ -40,9 +47,30 @@ export async function buildScope(user: AuthUser): Promise<ReportScope> {
   if (user.role === 'driver') {
     const driver = await Driver.findOne({ userId: user.userId }).lean();
     if (!driver) throw ApiError.notFound('Driver profile not found');
-    return { driverId: driver._id, userId: user.userId };
+    return { driverId: driver._id, driverIds: null, userId: user.userId };
   }
-  return { driverId: null, userId: user.userId };
+
+  if (user.role === 'company') {
+    return {
+      driverId: null,
+      driverIds: await companyDriverIds(user.userId),
+      userId: user.userId,
+    };
+  }
+
+  return { driverId: null, driverIds: null, userId: user.userId };
+}
+
+/**
+ * The `driverId` clause for a scope — one driver, a roster, or unrestricted.
+ *
+ * An empty roster must still match nothing rather than everything, which is exactly the
+ * mistake the old `...(scope.driverId ? {...} : {})` spread made for companies.
+ */
+function driverFilter(scope: ReportScope): Record<string, unknown> {
+  if (scope.driverId) return { driverId: scope.driverId };
+  if (scope.driverIds) return { driverId: { $in: scope.driverIds } };
+  return {};
 }
 
 /** Date-range filter, with both boundaries interpreted in America/Los_Angeles. */
@@ -61,7 +89,7 @@ export async function tripsCompleted(user: AuthUser, range: ReportRange) {
   const filter: QueryFilter<ITrip> = {
     status: 'completed',
     ...dateFilter(range, 'timestamps.completed'),
-    ...(scope.driverId ? { driverId: scope.driverId } : {}),
+    ...driverFilter(scope),
   };
 
   const trips = await Trip.find(filter).sort({ 'timestamps.completed': -1 }).lean();
@@ -79,7 +107,7 @@ export async function tripsCompleted(user: AuthUser, range: ReportRange) {
   }));
 
   return {
-    scope: scope.driverId ? 'own' : 'all',
+    scope: scope.driverId ? 'own' : scope.driverIds ? 'company' : 'all',
     count: rows.length,
     ...(showFare ? { totalFare: round2(trips.reduce((sum, t) => sum + t.fareAmount, 0)) } : {}),
     rows,
@@ -113,7 +141,47 @@ export async function earningsPayout(user: AuthUser, range: ReportRange) {
     };
   }
 
-  // Admin / company: aggregate revenue-split transactions across all wallets.
+  /*
+   * A company's earnings are its OWN wallet's revenue-split credits.
+   *
+   * This branch aggregated every revenue-split transaction across every wallet on the
+   * platform, so a company operator reading "Earnings and payout" was shown each rival
+   * operator's takings and the platform's own share — and could export it. Admin keeps
+   * the unrestricted aggregate; a company is narrowed to the wallet it owns.
+   */
+  if (scope.driverIds) {
+    const companyWallet = await Wallet.findOne({
+      ownerId: scope.userId,
+      ownerType: 'company',
+    }).lean();
+
+    if (!companyWallet) {
+      return { scope: 'company', count: 0, totals: {}, grandTotal: 0, rows: [] };
+    }
+
+    const companyFilter: QueryFilter<ITransaction> = {
+      walletId: companyWallet._id,
+      type: 'credit',
+      ...dateFilter(range, 'createdAt'),
+    };
+
+    const companyRows = await Transaction.find(companyFilter).sort({ createdAt: -1 }).lean();
+
+    return {
+      scope: 'company',
+      count: companyRows.length,
+      balance: round2(companyWallet.balance),
+      totals: companyRows.reduce<Record<string, number>>((acc, t) => {
+        const reason = String(t.meta?.reason ?? 'unknown');
+        acc[reason] = round2((acc[reason] ?? 0) + t.amount);
+        return acc;
+      }, {}),
+      grandTotal: round2(companyRows.reduce((sum, t) => sum + t.amount, 0)),
+      rows: companyRows.map(mapTransaction),
+    };
+  }
+
+  // Admin: aggregate revenue-split transactions across all wallets.
   const filter: QueryFilter<ITransaction> = {
     type: 'credit',
     'meta.reason': { $in: ['revenue_split_company', 'revenue_split_platform', 'driver_earnings'] },
@@ -145,21 +213,21 @@ export async function cancellationsPenalties(user: AuthUser, range: ReportRange)
   const tripFilter: QueryFilter<ITrip> = {
     $or: [{ status: 'cancelled' }, { penaltyApplied: true }],
     ...dateFilter(range, 'updatedAt'),
-    ...(scope.driverId ? { driverId: scope.driverId } : {}),
+    ...driverFilter(scope),
   };
 
   const [trips, penalties] = await Promise.all([
     Trip.find(tripFilter).sort({ updatedAt: -1 }).lean(),
     PenaltyEvent.find({
       ...dateFilter(range, 'createdAt'),
-      ...(scope.driverId ? { driverId: scope.driverId } : {}),
+      ...driverFilter(scope),
     })
       .sort({ createdAt: -1 })
       .lean(),
   ]);
 
   return {
-    scope: scope.driverId ? 'own' : 'all',
+    scope: scope.driverId ? 'own' : scope.driverIds ? 'company' : 'all',
     cancellations: trips.map((t) => ({
       tripId: String(t._id),
       driverId: String(t.driverId),

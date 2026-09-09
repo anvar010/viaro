@@ -63,9 +63,18 @@ router.get(
   asyncHandler(controller.dashboardUsers),
 );
 
+/*
+ * Admin only.
+ *
+ * This aggregates every customer subscription on the platform into a monthly revenue
+ * figure — passenger income that belongs to Viaro, not to any fleet operator. A company
+ * has no roster-scoped view of it to be given (subscriptions have no driver), so there is
+ * nothing here it can legitimately see; allowing 'company' simply handed operators the
+ * platform's own subscription takings.
+ */
 router.get(
   '/revenue/subscriptions',
-  roleGuard('admin', 'company'),
+  roleGuard('admin'),
   asyncHandler(controller.subscriptionRevenue),
 );
 

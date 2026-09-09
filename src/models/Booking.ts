@@ -87,6 +87,16 @@ export interface IBooking {
   walletCreditRequested?: number;
   /** Stored as UTC; always interpreted/displayed in America/Los_Angeles (spec §8 rule 1). */
   scheduledAt: Date;
+  /**
+   * The pickup time this booking was ORIGINALLY made for.
+   *
+   * The cancellation fee is a function of how much notice the operator gets, and it read
+   * `scheduledAt` — which a customer can move. Pushing the pickup a week out therefore
+   * reset the fee clock, so a late cancellation could be made free by rescheduling first.
+   * Set once at creation and never amended, so the policy always measures notice against
+   * the commitment that was actually made.
+   */
+  originalScheduledAt?: Date;
   city?: string;
   estimatedFare?: number;
   createdAt: Date;
@@ -154,6 +164,7 @@ const bookingSchema = new Schema<IBooking>(
     favoriteDriverId: { type: Schema.Types.ObjectId, ref: 'Driver' },
     status: { type: String, enum: BOOKING_STATUSES, default: 'pending', index: true },
     scheduledAt: { type: Date, required: true, index: true },
+    originalScheduledAt: { type: Date },
     city: { type: String, lowercase: true, trim: true },
     estimatedFare: { type: Number, min: 0 },
   },

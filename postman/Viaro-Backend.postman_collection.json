@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Viaro Backend — Full API",
-    "description": "Complete Viaro ride-hailing API: auth, users, pricing, booking, dispatch, trip lifecycle, cancellation & refunds, wallet, notifications, flight, chat, reports and admin.\n\n**Run `npm run seed` first** — the seeded accounts all use the password `test123`.\n\nRequests are ordered as a working flow, so \"Run collection\" exercises the whole system end to end. Every request asserts its result.",
+    "description": "Complete Viaro ride-hailing API: auth, users, pricing, booking, dispatch, trip lifecycle, cancellation & refunds, wallet, notifications, flight, chat, reports and admin.\n\n**Run `npm run seed` first** — the seeded accounts all use the password `test1234`.\n\nRequests are ordered as a working flow, so \"Run collection\" exercises the whole system end to end. Every request asserts its result.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -332,7 +332,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"role\": \"customer\",\n  \"name\": \"Postman Customer\",\n  \"email\": \"{{$randomExampleEmail}}\",\n  \"phone\": \"+1555{{$randomInt}}\",\n  \"password\": \"test123\"\n}",
+              "raw": "{\n  \"role\": \"customer\",\n  \"name\": \"Postman Customer\",\n  \"email\": \"{{$randomExampleEmail}}\",\n  \"phone\": \"+1555{{$randomInt}}\",\n  \"password\": \"test1234\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -376,7 +376,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"role\": \"driver\",\n  \"name\": \"No Vehicle\",\n  \"email\": \"{{$randomExampleEmail}}\",\n  \"phone\": \"+15551110000\",\n  \"password\": \"test123\"\n}",
+              "raw": "{\n  \"role\": \"driver\",\n  \"name\": \"No Vehicle\",\n  \"email\": \"{{$randomExampleEmail}}\",\n  \"phone\": \"+15551110000\",\n  \"password\": \"test1234\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -419,7 +419,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"role\": \"customer\",\n  \"name\": \"Dup\",\n  \"email\": \"customer1@viaro.test\",\n  \"phone\": \"+15551110001\",\n  \"password\": \"test123\"\n}",
+              "raw": "{\n  \"role\": \"customer\",\n  \"name\": \"Dup\",\n  \"email\": \"customer1@viaro.test\",\n  \"phone\": \"+15551110001\",\n  \"password\": \"test1234\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3592,7 +3592,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Postman Roster Driver\",\n  \"email\": \"{{$randomExampleEmail}}\",\n  \"phone\": \"+1555{{$randomInt}}\",\n  \"password\": \"test123\",\n  \"vehicleClass\": \"van\"\n}",
+              "raw": "{\n  \"name\": \"Postman Roster Driver\",\n  \"email\": \"{{$randomExampleEmail}}\",\n  \"phone\": \"+1555{{$randomInt}}\",\n  \"password\": \"test1234\",\n  \"vehicleClass\": \"van\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -4028,7 +4028,7 @@
     },
     {
       "key": "seedPassword",
-      "value": "test123"
+      "value": "test1234"
     },
     {
       "key": "adminToken",

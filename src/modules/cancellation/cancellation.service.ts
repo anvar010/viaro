@@ -82,7 +82,32 @@ export async function cancelTripByCustomer(
   if (trip.status === 'completed') throw ApiError.conflict('A completed trip cannot be cancelled');
   if (trip.status === 'cancelled') throw ApiError.conflict('Trip is already cancelled');
 
-  const policy = evaluate(booking.tripType, booking.scheduledAt);
+  /*
+   * A ride in progress is not cancellable.
+   *
+   * The refund policy keys off `scheduledAt`, not trip state, so a passenger already in
+   * the car could cancel and collect the 90% "cancelled well in advance" refund for a
+   * journey the chauffeur was actively driving. Time-until-pickup stops being the right
+   * question the moment the trip starts.
+   */
+  if (trip.status === 'started') {
+    throw ApiError.conflict(
+      'This trip is already under way and can no longer be cancelled — contact support',
+    );
+  }
+
+  /*
+   * Notice is measured against the ORIGINAL pickup time.
+   *
+   * Using the current `scheduledAt` let a customer reschedule a soon-to-depart ride into
+   * next week — resetting the fee clock — and then cancel it free. `originalScheduledAt`
+   * is written once at creation and never amended. It falls back to `scheduledAt` for
+   * bookings made before the field existed.
+   */
+  const policy = evaluate(
+    booking.tripType,
+    booking.originalScheduledAt ?? booking.scheduledAt,
+  );
 
   trip.status = 'cancelled';
   trip.cancellation = {

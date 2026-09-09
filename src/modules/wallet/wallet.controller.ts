@@ -41,7 +41,8 @@ export async function releaseCredit(req: Request, res: Response): Promise<void> 
 }
 
 export async function collect(req: Request, res: Response): Promise<void> {
-  const data = await walletService.collectPayment(body<CollectPaymentInput>(req).tripId);
+  // The caller is passed so a company can only charge for its own roster's trips.
+  const data = await walletService.collectPayment(body<CollectPaymentInput>(req).tripId, req.user!);
   res.json({ success: true, data });
 }
 

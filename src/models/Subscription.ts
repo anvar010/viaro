@@ -11,6 +11,8 @@ export interface ISubscription {
   price: number;
   startDate: Date;
   renewalDate: Date;
+  /** Gateway reference for the charge that activated this subscription. */
+  paymentReference?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,6 +27,7 @@ const subscriptionSchema = new Schema<ISubscription>(
     price: { type: Number, required: true, min: 0 },
     startDate: { type: Date, required: true },
     renewalDate: { type: Date, required: true },
+    paymentReference: { type: String, default: null },
   },
   { timestamps: true },
 );

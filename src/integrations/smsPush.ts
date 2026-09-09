@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { isProduction } from '../config/env';
 import { env } from '../config/env';
 import { logger } from '../utils/logger';
 
@@ -169,10 +170,19 @@ function stringifyValues(data: Record<string, unknown>): Record<string, string> 
 }
 
 function logOnly(message: DeliveryMessage, provider: string): DeliveryResult {
+  /*
+   * The body carries OTPs. It is printed only outside production.
+   *
+   * With no SMS provider configured the fallback wrote the whole message to the
+   * application log — and the shipped .env.example leaves the provider blank, so a
+   * deployment that never wired one up was logging every one-time code in plaintext to
+   * wherever its logs are shipped. Locally the code on stdout is the point; in production
+   * it is a credential in a log aggregator.
+   */
   logger.info('smsPush: no provider configured — message not delivered', {
     to: message.to,
     title: message.title,
-    body: message.body,
+    ...(isProduction ? { body: '[redacted]' } : { body: message.body }),
   });
   return { delivered: false, provider, reference: `local_${crypto.randomUUID()}`, placeholder: true };
 }

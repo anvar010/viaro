@@ -25,9 +25,14 @@ export function extractSocketToken(socket: Socket): string | null {
   const header = socket.handshake.headers.authorization;
   if (typeof header === 'string' && header) return stripBearer(header);
 
-  const queryToken = socket.handshake.query.token;
-  if (typeof queryToken === 'string' && queryToken) return stripBearer(queryToken);
-
+  /*
+   * `?token=` is deliberately NOT accepted.
+   *
+   * Query strings are written to proxy access logs, browser history and referrer headers,
+   * so a token passed that way outlives the connection in places nobody is guarding. The
+   * handshake auth payload and the Authorization header above both keep it out of the
+   * URL, and every Viaro client already uses one of them.
+   */
   return null;
 }
 

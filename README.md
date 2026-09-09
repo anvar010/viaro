@@ -56,7 +56,7 @@ Run the **`00 · Setup`** folder first (it logs in as each role and stores the t
 **Run collection** to execute the whole flow in order — the requests chain into each other,
 so a booking created in folder 04 is accepted in 05, cancelled in 06 and settled in 07.
 
-Seeded accounts, all with password `test123`:
+Seeded accounts, all with password `test1234`:
 
 | Email | Role | Notes |
 |---|---|---|

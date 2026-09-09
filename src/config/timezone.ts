@@ -111,3 +111,19 @@ export function isBefore(a: DateInput, b: DateInput): boolean {
 export function isAfter(a: DateInput, b: DateInput): boolean {
   return toAppTime(a) > toAppTime(b);
 }
+
+/* -------------------------------------------------------------------------- */
+/* Validation helpers                                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Is this string something `toAppTime` can actually parse?
+ *
+ * `toAppTime` throws a bare Error on rubbish input, which the error handler could only
+ * report as a 500 — so `?requestedAt=notadate` looked like a server fault instead of the
+ * bad request it is, and the same input queued a report job that retried three times
+ * before failing. Schemas call this so the rejection happens at the edge, as a 400.
+ */
+export function isParsableDate(value: string): boolean {
+  return DateTime.fromISO(value, { zone: APP_TIMEZONE }).isValid;
+}

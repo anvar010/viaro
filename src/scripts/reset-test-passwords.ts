@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import bcrypt from 'bcrypt';
 import { connectMongo, disconnectMongo } from '../config/db';
+import { env } from '../config/env';
 import { User } from '../models/User';
 import { SEED_PASSWORD, TEST_EMAIL_PATTERN } from './seed';
 
@@ -19,6 +20,20 @@ import { SEED_PASSWORD, TEST_EMAIL_PATTERN } from './seed';
 const BCRYPT_ROUNDS = 12;
 
 async function main() {
+  /*
+   * Never in production.
+   *
+   * The TEST_EMAIL_PATTERN filter means this cannot touch a real customer, but it still
+   * sets a publicly-documented password on every matching account — and if seed data ever
+   * reached a live database, this would hand anyone who read the README a working login.
+   */
+  if (env.NODE_ENV === 'production') {
+    throw new Error(
+      'Refusing to reset test-account passwords with NODE_ENV=production — ' +
+        'this sets a known, documented password on every seeded account.',
+    );
+  }
+
   await connectMongo();
 
   const users = await User.find({ email: TEST_EMAIL_PATTERN }).select('email role').lean();

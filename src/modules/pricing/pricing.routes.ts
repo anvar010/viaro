@@ -20,6 +20,8 @@ subscriptionRouter.post(
   validate({ body: createSubscriptionSchema }),
   asyncHandler(controller.createSubscription),
 );
+// Prices now live server-side, so clients need a way to read the catalogue.
+subscriptionRouter.get('/plans', asyncHandler(controller.listSubscriptionPlans));
 subscriptionRouter.get('/me', asyncHandler(controller.getMySubscription));
 subscriptionRouter.delete('/me', asyncHandler(controller.cancelSubscription));
 

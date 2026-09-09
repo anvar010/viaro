@@ -33,4 +33,25 @@ const transactionSchema = new Schema<ITransaction>(
 
 transactionSchema.index({ walletId: 1, createdAt: -1 });
 
+/**
+ * One charge per trip, enforced by the database.
+ *
+ * `collectTripPayment` checks for an existing `trip_payment` row before charging, but a
+ * check followed by a write is not atomic: two parallel Collect requests both found
+ * nothing and both billed the customer, leaving two ledger rows for one ride — and a
+ * later refund sums those rows, so the customer would have been refunded twice the fare.
+ * Only a unique index can actually make this impossible under concurrency.
+ *
+ * Partial, so it constrains nothing but trip payments — every other transaction kind may
+ * legitimately repeat for the same trip (ride_credit, refunds, revenue splits).
+ */
+transactionSchema.index(
+  { 'meta.tripId': 1 },
+  {
+    unique: true,
+    partialFilterExpression: { 'meta.reason': 'trip_payment' },
+    name: 'uniq_trip_payment_per_trip',
+  },
+);
+
 export const Transaction = model<ITransaction>('Transaction', transactionSchema);

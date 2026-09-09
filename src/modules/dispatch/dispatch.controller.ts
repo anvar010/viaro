@@ -5,7 +5,8 @@ import type { PaginationQuery } from '../../utils/pagination';
 import type { AssignDriverInput } from './dispatch.validation';
 
 export async function pool(req: Request, res: Response): Promise<void> {
-  const data = await dispatchService.listDispatchPool(query<PaginationQuery>(req));
+  // The driver-facing route serves the same pool without the rider's contact details.
+  const data = await dispatchService.listDispatchPool(query<PaginationQuery>(req), req.user!.role);
   res.json({ success: true, data });
 }
 

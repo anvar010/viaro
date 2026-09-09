@@ -10,9 +10,20 @@ import { ApiError } from '../../utils/ApiError';
 import type { UserRole } from '../../utils/roles';
 import { getOrCreateWallet } from '../wallet/wallet.service';
 import type { LoginInput, RegisterInput } from './auth.validation';
+import { revokeUserSessions } from './revocation';
 
 const BCRYPT_ROUNDS = 12;
 const BLACKLIST_PREFIX = 'auth:blacklist:refresh:';
+
+/**
+ * A real bcrypt hash of a value nobody can log in with, compared against when the email
+ * is unknown so that path costs the same as a genuine password check. Generated once at
+ * module load rather than hardcoded, so it always matches the current cost factor.
+ */
+const DUMMY_PASSWORD_HASH = bcrypt.hashSync(
+  `viaro-nonexistent-account-${crypto.randomUUID()}`,
+  BCRYPT_ROUNDS,
+);
 
 export interface TokenPair {
   accessToken: string;
@@ -84,7 +95,18 @@ async function isRefreshTokenBlacklisted(jti?: string): Promise<boolean> {
 /* Use cases                                                                   */
 /* -------------------------------------------------------------------------- */
 
-export async function register(input: RegisterInput) {
+/**
+ * What `register()` can create internally.
+ *
+ * The PUBLIC surface is narrower on purpose: `registerSchema` (and therefore
+ * POST /auth/register) accepts only 'customer' | 'driver', because accepting a
+ * privileged role there let anyone mint themselves an admin. This wider type exists for
+ * the trusted in-process callers — the seed script — that legitimately create the
+ * admin and company accounts, without reopening the HTTP hole.
+ */
+export type InternalRegisterInput = Omit<RegisterInput, 'role'> & { role: UserRole };
+
+export async function register(input: InternalRegisterInput) {
   const existing = await User.findOne({ email: input.email }).lean();
   if (existing) throw ApiError.conflict('An account with this email already exists');
 
@@ -111,7 +133,14 @@ export async function register(input: RegisterInput) {
   }
 
   if (input.role === 'company') {
-    await Company.create({ userId: user._id, driverIds: [], revenueSharePct: 60 });
+    // Read from config, not hardcoded: env.COMPANY_REVENUE_PCT is the one place the split
+    // is configured (and is validated to total 100 with ADMIN_REVENUE_PCT). A literal 60
+    // here silently ignored any deployment that changed it.
+    await Company.create({
+      userId: user._id,
+      driverIds: [],
+      revenueSharePct: env.COMPANY_REVENUE_PCT,
+    });
   }
 
   // Customers and drivers both hold balances (ride credit / earnings).
@@ -128,10 +157,20 @@ export async function register(input: RegisterInput) {
 export async function login(input: LoginInput) {
   // passwordHash is select:false on the schema, so it must be requested explicitly.
   const user = await User.findOne({ email: input.email }).select('+passwordHash');
-  if (!user) throw ApiError.unauthorized('Invalid email or password');
 
-  const matches = await bcrypt.compare(input.password, user.passwordHash);
-  if (!matches) throw ApiError.unauthorized('Invalid email or password');
+  /*
+   * Constant-ish work on both paths.
+   *
+   * Returning early for an unknown email skipped the bcrypt comparison entirely, making
+   * those responses measurably faster than a known email with a wrong password — an
+   * account-enumeration oracle that needs no error-message difference to exploit. Hashing
+   * against a dummy value keeps the timing of the two paths comparable.
+   */
+  const matches = user
+    ? await bcrypt.compare(input.password, user.passwordHash)
+    : await bcrypt.compare(input.password, DUMMY_PASSWORD_HASH);
+
+  if (!user || !matches) throw ApiError.unauthorized('Invalid email or password');
 
   if (user.status === 'suspended') throw ApiError.forbidden('This account is suspended');
 
@@ -139,10 +178,26 @@ export async function login(input: LoginInput) {
   return { user: sanitise(user), role: user.role, ...tokens };
 }
 
+/**
+ * Refresh with rotation.
+ *
+ * This used to hand back a new access token and leave the refresh token untouched, so a
+ * single stolen refresh token could be replayed for its whole 30-day life with nothing to
+ * notice. Now every call retires the presented token and issues a fresh pair: a token can
+ * be spent exactly once, and a second use of an already-spent token is a strong signal it
+ * was captured — so that revokes the user's sessions outright rather than merely failing.
+ */
 export async function refresh(refreshToken: string) {
   const payload = verifyRefreshToken(refreshToken);
 
   if (await isRefreshTokenBlacklisted(payload.jti)) {
+    /*
+     * Reuse detection: this token was already spent (or explicitly logged out). Either
+     * the legitimate holder is replaying, or an attacker is — and we cannot tell which,
+     * so the safe move is to end every session for the account and make both parties
+     * sign in again.
+     */
+    await revokeUserSessions(payload.userId);
     throw ApiError.unauthorized('Refresh token has been revoked');
   }
 
@@ -150,10 +205,11 @@ export async function refresh(refreshToken: string) {
   if (!user) throw ApiError.unauthorized('Account no longer exists');
   if (user.status === 'suspended') throw ApiError.forbidden('This account is suspended');
 
-  return {
-    accessToken: signAccessToken(String(user._id), user.role),
-    role: user.role,
-  };
+  // Retire the presented token before issuing its replacement.
+  await blacklistRefreshToken(payload);
+
+  const tokens = issueTokens(String(user._id), user.role);
+  return { ...tokens, role: user.role };
 }
 
 export async function logout(refreshToken: string): Promise<void> {

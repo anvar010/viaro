@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
 import { SupportTicket } from '../../models/SupportTicket';
 import { ApiError } from '../../utils/ApiError';
+import { now, toDate } from '../../config/timezone';
 import type { AuthUser } from '../../middlewares/authGuard';
 import { paginated, toSkipLimit, type PaginationQuery } from '../../utils/pagination';
 import * as notify from '../notifications/notifications.service';
@@ -56,7 +57,9 @@ export async function reply(ticketId: string, user: AuthUser, input: ReplyInput)
     senderId: new Types.ObjectId(user.userId),
     senderRole: user.role,
     message: input.message,
-    createdAt: new Date(),
+    // Spec §8.1: every stored timestamp goes through the shared timezone helper, never a
+    // raw `new Date()` — otherwise the server's zone leaks into a customer's transcript.
+    createdAt: toDate(now()),
   });
 
   // An agent reply puts the ball back in the user's court, and vice versa.

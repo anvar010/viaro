@@ -14,6 +14,7 @@ import * as notify from '../notifications/notifications.service';
 import { NOTIFICATION_TYPES } from '../notifications/notifications.service';
 import type { CreateBookingInput, UpdateBookingInput } from './booking.validation';
 import { applyAmendment, assertChangeable } from './booking.amendments';
+import { companyOwnsDriver } from '../../utils/roster';
 import { recordBookingCancellation } from './booking.cancellation';
 import * as events from '../events/events.bus';
 
@@ -51,6 +52,9 @@ export async function createBooking(customerId: string, input: CreateBookingInpu
     city: input.city,
     // Every stored time goes through the shared PT helper — never `new Date()` (spec §8.1).
     scheduledAt: input.scheduledAt ? toDate(input.scheduledAt) : toDate(now()),
+    // Frozen at creation — the cancellation policy measures notice against this, not
+    // against a time the customer can move.
+    originalScheduledAt: input.scheduledAt ? toDate(input.scheduledAt) : toDate(now()),
     flightDetails: input.flightDetails
       ? {
           flightNumber: input.flightDetails.flightNumber,
@@ -114,6 +118,22 @@ export async function getBookingForUser(bookingId: string, user: AuthUser) {
     if (ownerId !== user.userId) throw ApiError.forbidden('This booking belongs to another customer');
   }
 
+  /*
+   * A company sees a booking only once one of ITS chauffeurs is on the trip.
+   *
+   * There was no company branch, so any booking could be read by id — and this response
+   * populates the customer's name and phone, so it handed over another operator's
+   * passenger's contact details along with their pickup address. Booking ids are not
+   * secret; the roster is the boundary. An unassigned booking has no trip yet and so
+   * belongs to no operator.
+   */
+  if (user.role === 'company') {
+    const trip = await Trip.findOne({ bookingId: booking._id }).select('driverId').lean();
+    if (!trip || !(await companyOwnsDriver(user.userId, trip.driverId))) {
+      throw ApiError.forbidden('That booking is not assigned to a driver on your roster');
+    }
+  }
+
   return booking;
 }
 
@@ -155,8 +175,44 @@ export async function updateBooking(bookingId: string, customerId: string, input
     }
   }
 
+  /*
+   * Re-price whenever the amendment touches something the fare depends on.
+   *
+   * `calculateFare` reads vehicle class and the requested time (peak multiplier), so a
+   * booking amended from an off-peak sedan to a peak-hour luxury SUV kept its original,
+   * cheaper quote — the customer chose the expensive option and paid for the cheap one.
+   * The trip is created from `estimatedFare`, so this was real money.
+   */
+  // `city` is optional on the model and pricing is city-based, so a booking without one
+  // cannot be re-quoted; it keeps its original estimate rather than being priced wrongly.
+  const repriced = Boolean((input.vehicleClass || input.scheduledAt) && booking.city);
+  let previousFare: number | undefined;
+
+  if (changed && repriced) {
+    previousFare = booking.estimatedFare;
+    const fare = await pricingService.calculateFare({
+      city: booking.city as string,
+      tripType: booking.tripType,
+      requestedAt: booking.scheduledAt,
+      customerId: String(booking.customerId),
+      ...(booking.vehicleClass ? { vehicleClass: booking.vehicleClass } : {}),
+    });
+    booking.estimatedFare = fare.fare;
+  }
+
   if (changed) {
     await booking.save();
+
+    if (previousFare !== undefined && previousFare !== booking.estimatedFare) {
+      // The customer must learn the price moved from the same change that moved it.
+      await notify.send(booking.customerId, NOTIFICATION_TYPES.BOOKING_REPRICED, {
+        message: `Your fare estimate changed to ${booking.estimatedFare}`,
+        bookingId: String(booking._id),
+        previousFare,
+        estimatedFare: booking.estimatedFare,
+      });
+    }
+
     // The amendment banner on every console reads from this, and a chauffeur already
     // driving to the old address is the reason it cannot wait for a poll.
     events.publish({

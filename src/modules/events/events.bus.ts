@@ -1,5 +1,6 @@
 import { EventEmitter } from 'node:events';
 import type { UserRole } from '../../utils/roles';
+import { now, toISO } from '../../config/timezone';
 import { logger } from '../../utils/logger';
 
 /**
@@ -68,7 +69,8 @@ export function publish(event: Omit<ChangeEvent, 'at'>): void {
   }
 
   try {
-    emitter.emit(CHANNEL, { ...event, at: new Date().toISOString() } satisfies ChangeEvent);
+    // Same rule as every other stored/emitted timestamp — through the shared helper.
+    emitter.emit(CHANNEL, { ...event, at: toISO(now()) } satisfies ChangeEvent);
   } catch (err) {
     logger.warn(`Could not publish change event '${event.topic}:${event.action}'`, err);
   }
