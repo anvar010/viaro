@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
 import { setTripStatus, type AdminTripStatus } from "@/lib/api/admin";
 import { IconCheck, IconClose } from "@/components/ui/Icons";
 
@@ -112,7 +112,7 @@ export function TripStatusControl({
       setReason("");
       await onChanged();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "That did not go through.");
+      setError(errorText(err, "That did not go through."));
     } finally {
       setSaving(false);
     }

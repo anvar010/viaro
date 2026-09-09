@@ -104,6 +104,103 @@ export async function refreshSession(): Promise<boolean> {
   }
 }
 
+/**
+ * The message to actually show a user for a failed request.
+ *
+ * The backend already explains itself — "A percentage payout cannot exceed 100", "Enter a
+ * valid phone number" — but it puts field-level reasons in `details` and leaves the
+ * top-level `message` as a flat "Validation failed". Rendering only `message` meant every
+ * rejected form said the same useless thing while the real reason sat unread on the
+ * error object.
+ */
+export function errorText(error: unknown, fallback = "Something went wrong"): string {
+  if (!(error instanceof ApiError)) {
+    return error instanceof Error && error.message ? error.message : fallback;
+  }
+
+  const { details } = error;
+
+  if (Array.isArray(details)) {
+    const parts = details
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object") {
+          const { path, message } = item as { path?: unknown; message?: unknown };
+          if (typeof message === "string") {
+            return typeof path === "string" && path ? `${path}: ${message}` : message;
+          }
+        }
+        return null;
+      })
+      .filter((part): part is string => Boolean(part));
+
+    if (parts.length > 0) return parts.join(" · ");
+  }
+
+  if (typeof details === "string" && details) return details;
+
+  return error.message || fallback;
+}
+
+/**
+ * Downloads a protected file without ever putting the token in a URL.
+ *
+ * A plain `<a href={apiUrl}>` cannot carry an Authorization header — a browser navigation
+ * simply does not send one — so the report download links landed on the backend's raw
+ * `{"success":false,"message":"Missing Authorization bearer token"}` instead of a file.
+ * Fetching with the header and handing the browser an object URL keeps the token in
+ * memory, where this app deliberately keeps it, and keeps the user inside the console.
+ *
+ * The 401-refresh-retry below mirrors `request()`: an export polled to "Ready" can easily
+ * outlive a 15-minute access token, which is exactly when a download is attempted.
+ */
+export async function downloadFile(
+  path: string,
+  fallbackFilename: string,
+  retryOnUnauthorized = true,
+): Promise<void> {
+  const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+
+  const response = await fetch(url, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    cache: "no-store",
+  });
+
+  if (response.status === 401 && retryOnUnauthorized) {
+    const refreshed = await refreshSession();
+    if (refreshed) return downloadFile(path, fallbackFilename, false);
+  }
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
+    throw new ApiError(
+      response.status,
+      body?.message ?? `Download failed with ${response.status}`,
+      body?.details,
+    );
+  }
+
+  // Prefer the server's own filename when it sends one.
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
+  const filename = match?.[1] ? decodeURIComponent(match[1]) : fallbackFilename;
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+
+  try {
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  } finally {
+    // Revoking immediately can cancel the download in some browsers; one tick is enough.
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
+  }
+}
+
 export const api = {
   get: <T>(path: string, options?: RequestOptions) =>
     request<T>(path, { ...options, method: "GET" }),

@@ -5,7 +5,7 @@ import { Badge, Card, Kicker } from "@/components/ui/Surfaces";
 import { Button } from "@/components/ui/Button";
 import { ConsolePage, formatDateTime } from "@/components/ui/DataTable";
 import { listTickets, replyToTicket, setTicketStatus, type Ticket } from "@/lib/api/admin";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
 
 /** Triage queue. Only an admin may move a ticket's state — the PATCH is admin-guarded. */
 const STATUSES = ["open", "pending", "resolved", "closed"] as const;
@@ -34,7 +34,7 @@ export default function SupportPage() {
       setTickets(Array.isArray(page) ? page : (page.items ?? []));
       setError(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not load the queue");
+      setError(errorText(err, "Could not load the queue"));
       setTickets([]);
     }
   }, []);
@@ -60,6 +60,13 @@ export default function SupportPage() {
               type="button"
               onClick={() => setFilter(value)}
               aria-pressed={filter === value}
+              /*
+               * Both this filter chip and the "move this case to…" action below render a
+               * bare status word, so "resolved" was the accessible name of two different
+               * controls on the same screen — indistinguishable to anyone navigating by
+               * a list of buttons.
+               */
+              aria-label={value === "all" ? "Show all cases" : `Filter: ${value}`}
               className={`rounded-[0.5rem] px-3 py-1.5 text-label font-bold capitalize transition-colors ${
                 filter === value
                   ? "bg-surface-raised text-fg"
@@ -154,7 +161,7 @@ function ReplyForm({ ticketId, onDone }: { ticketId: string; onDone: () => void 
           setError(null);
           onDone();
         } catch (err) {
-          setError(err instanceof ApiError ? err.message : "Could not send");
+          setError(errorText(err, "Could not send"));
         } finally {
           setPending(false);
         }
@@ -201,6 +208,7 @@ function StatusControl({
             block={false}
             disabled={pending}
             className="capitalize"
+            aria-label={`Move this case to ${status}`}
             onClick={async () => {
               setPending(true);
               try {
@@ -208,7 +216,7 @@ function StatusControl({
                 setError(null);
                 onDone();
               } catch (err) {
-                setError(err instanceof ApiError ? err.message : "Could not update");
+                setError(errorText(err, "Could not update"));
               } finally {
                 setPending(false);
               }

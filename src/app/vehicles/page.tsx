@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ConsolePage, DataTable, money, type Column } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/Dashboard";
 import { IconCar, IconCheck, IconClose, IconMoney } from "@/components/ui/Icons";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
 import {
   createVehicleClass,
   deleteVehicleClass,
@@ -40,7 +40,7 @@ export default function VehiclesPage() {
       setRows(await listVehicleClasses(true));
       setError(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not load the catalogue");
+      setError(errorText(err, "Could not load the catalogue"));
       setRows([]);
     }
   }, []);
@@ -54,7 +54,7 @@ export default function VehiclesPage() {
       await updateVehicleClass(row._id, { active: !row.active });
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not update that class");
+      setError(errorText(err, "Could not update that class"));
     }
   }
 
@@ -247,7 +247,7 @@ function VehicleDialog({
       }
       await onSaved();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not save that class");
+      setError(errorText(err, "Could not save that class"));
     } finally {
       setSaving(false);
     }
@@ -261,7 +261,7 @@ function VehicleDialog({
       await deleteVehicleClass(vehicle._id);
       await onSaved();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not delete that class");
+      setError(errorText(err, "Could not delete that class"));
       setSaving(false);
     }
   }
@@ -476,12 +476,22 @@ function Field({
   hint?: string;
   children: React.ReactNode;
 }) {
+  /*
+   * The input is nested INSIDE the label rather than sitting as a sibling.
+   *
+   * The label previously had neither `htmlFor` nor any nesting, so nothing connected the
+   * two: a screen reader announced the field as unlabelled, and clicking the label text
+   * did not focus the input. Nesting fixes both for all seven fields in the dialog
+   * without needing an id threaded through every call site.
+   */
   return (
     <div>
-      <label className="block text-note font-medium uppercase tracking-wider text-fg-muted">
-        {label}
+      <label className="block">
+        <span className="block text-note font-medium uppercase tracking-wider text-fg-muted">
+          {label}
+        </span>
+        <span className="mt-1.5 block">{children}</span>
       </label>
-      <div className="mt-1.5">{children}</div>
       {hint ? <p className="mt-1.5 text-note leading-relaxed text-fg-faint">{hint}</p> : null}
     </div>
   );

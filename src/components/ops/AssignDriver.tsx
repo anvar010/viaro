@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { assignDriverToBooking, listDrivers, type RosterDriver } from "@/lib/api/admin";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
 import { Avatar, StatusBadge } from "@/components/ui/Dashboard";
 import { IconCheck, IconClose, IconStar } from "@/components/ui/Icons";
 
@@ -106,7 +106,7 @@ function AssignDialog({
       onAssigned();
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "The assignment did not go through.",
+        errorText(err, "The assignment did not go through."),
       );
     } finally {
       setSaving(false);

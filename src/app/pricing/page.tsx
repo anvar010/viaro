@@ -10,7 +10,7 @@ import {
   updatePricingRule,
   type PricingRule,
 } from "@/lib/api/admin";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
 
 /**
  * City pricing.
@@ -30,7 +30,7 @@ export default function PricingPage() {
       setRules(await listPricingRules());
       setError(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not load pricing");
+      setError(errorText(err, "Could not load pricing"));
       setRules([]);
     }
   }, []);
@@ -114,7 +114,7 @@ function RuleForm({ rule, onDone }: { rule: PricingRule; onDone: () => void }) {
           setState({ saved: true });
           onDone();
         } catch (err) {
-          setState({ error: err instanceof ApiError ? err.message : "Could not save" });
+          setState({ error: errorText(err, "Could not save") });
         } finally {
           setPending(false);
         }
@@ -127,11 +127,19 @@ function RuleForm({ rule, onDone }: { rule: PricingRule; onDone: () => void }) {
 
       <label className="w-32">
         <span className="text-label font-bold text-fg-muted">Base fare</span>
+        {/*
+          * `required` and a minimum above zero, matching the "Add a city" form.
+          *
+          * Without them, clearing this field submitted Number("") === 0 and silently
+          * saved a live city's fare as $0.00 with no warning — and the base fare is what
+          * makes a city bookable at all.
+          */}
         <input
           name="baseFare"
           type="number"
           step="0.01"
-          min={0}
+          min={0.01}
+          required
           defaultValue={rule.baseFare}
           className={`${inputClass} mt-1`}
         />
@@ -178,7 +186,7 @@ function NewRuleForm({ onDone }: { onDone: () => void }) {
           (event.target as HTMLFormElement).reset();
           onDone();
         } catch (err) {
-          setState({ error: err instanceof ApiError ? err.message : "Could not add" });
+          setState({ error: errorText(err, "Could not add") });
         } finally {
           setPending(false);
         }
@@ -207,7 +215,7 @@ function NewRuleForm({ onDone }: { onDone: () => void }) {
           name="baseFare"
           type="number"
           step="0.01"
-          min={0}
+          min={0.01}
           defaultValue={129}
           required
           className={`${inputClass} mt-1`}

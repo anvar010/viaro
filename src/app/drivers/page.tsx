@@ -11,7 +11,7 @@ import {
   type RosterDriver,
   type PenaltiesReport,
 } from "@/lib/api/admin";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
 
 const inputClass =
   "w-full rounded-field border border-border bg-surface-raised px-3 py-2 text-note text-fg outline-none";
@@ -37,7 +37,7 @@ export default function DriversPage() {
       setPenalties(pen);
       setError(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not load drivers");
+      setError(errorText(err, "Could not load drivers"));
       setDrivers([]);
     }
   }, []);
@@ -148,7 +148,7 @@ function PayoutForm({ driver, onDone }: { driver: RosterDriver; onDone: () => vo
           setState({ saved: true });
           onDone();
         } catch (err) {
-          setState({ error: err instanceof ApiError ? err.message : "Could not save" });
+          setState({ error: errorText(err, "Could not save") });
         } finally {
           setPending(false);
         }

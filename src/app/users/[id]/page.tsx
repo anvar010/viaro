@@ -19,7 +19,7 @@ import {
   type BadgeTone,
 } from "@/components/ui/Dashboard";
 import { IconCar, IconCheck, IconMoney, IconRoute, IconUsers } from "@/components/ui/Icons";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
 import { fetchAllPages, getBookingsDashboard, getUsersDashboard } from "@/lib/api/admin";
 import { listMyTrips } from "@/lib/api/driver";
 import { vehicleLabel } from "@/lib/vehicles";
@@ -75,13 +75,21 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  /**
+   * Guarded against a stale response for the same reason the trip detail page is: these
+   * fetch on mount with no cancellation check, so a quick navigation between two accounts
+   * could let the slower first response land last and render the wrong person's history
+   * under the new URL.
+   */
+  const load = useCallback(async (isCurrent: () => boolean = () => true) => {
     try {
       const [users, bookings, trips] = await Promise.all([
         fetchAllPages((page, limit) => getUsersDashboard(page, limit)),
         fetchAllPages((page, limit) => getBookingsDashboard(page, limit)),
         fetchAllPages((page, limit) => listMyTrips({ page, limit })),
       ]);
+
+      if (!isCurrent()) return;
 
       const found = users.items.find((u) => u._id === id) ?? null;
       setUser(found);
@@ -102,13 +110,18 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
       );
       setError(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not load this account");
+      if (!isCurrent()) return;
+      setError(errorText(err, "Could not load this account"));
       setRows([]);
     }
   }, [id]);
 
   useEffect(() => {
-    void load();
+    let cancelled = false;
+    void load(() => !cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
   const stats = useMemo(() => {

@@ -93,10 +93,8 @@ export function useAuth() {
   return context;
 }
 
-/** Where each role lands after signing in. */
-export const HOME_BY_ROLE: Record<UserRole, string> = {
-  customer: "/home",
-  driver: "/drive",
-  admin: "/admin/dashboard",
-  company: "/company/drivers",
-};
+/*
+ * A HOME_BY_ROLE map used to live here, routing four roles to paths like /company/drivers.
+ * It was never imported anywhere and none of those routes exist in this single-role
+ * console — left in place it reads as live routing config.
+ */

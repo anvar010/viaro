@@ -23,7 +23,7 @@ import {
   IconStar,
   IconUsers,
 } from "@/components/ui/Icons";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
 import { getBooking } from "@/lib/api/booking";
 import { getFlight, type FlightDetails } from "@/lib/api/admin";
 import { Amendments } from "@/components/ops/Amendments";
@@ -71,12 +71,22 @@ export default function BookingDetailPage({
   const [tripSearched, setTripSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  /**
+   * `isCurrent` guards every setState against a stale response.
+   *
+   * These fetches had no cancellation check, so navigating quickly from one trip to
+   * another could let the FIRST request resolve after the second — rendering the previous
+   * trip's record under the new URL, and leaving it there until something else triggered
+   * a reload. AssignDriver.tsx in this same codebase already guards the identical shape.
+   */
+  const load = useCallback(async (isCurrent: () => boolean = () => true) => {
     try {
       const result = await getBooking(id);
+      if (!isCurrent()) return;
       setBooking(result as FullBooking);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not load this booking");
+      if (!isCurrent()) return;
+      setError(errorText(err, "Could not load this booking"));
       return;
     }
 
@@ -84,16 +94,22 @@ export default function BookingDetailPage({
     try {
       const page = await listMyTrips({ limit: 100 });
       const match = (page.items ?? []).find((t) => String(t.bookingId) === id);
-      setTrip(match ? await getTrip(match._id) : null);
+      const resolved = match ? await getTrip(match._id) : null;
+      if (!isCurrent()) return;
+      setTrip(resolved);
     } catch {
       /* Leave the trip panel in its "none yet" state. */
     } finally {
-      setTripSearched(true);
+      if (isCurrent()) setTripSearched(true);
     }
   }, [id]);
 
   useEffect(() => {
-    void load();
+    let cancelled = false;
+    void load(() => !cancelled);
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
   // A chauffeur accepting, or another operator changing the status, while this page is open.

@@ -15,7 +15,7 @@ import {
   reference,
   type BadgeTone,
 } from "@/components/ui/Dashboard";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
 import {
   collectPayment,
   fetchAllPages,
@@ -136,7 +136,7 @@ export default function TripsPage() {
       );
       setError(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not load the pipeline");
+      setError(errorText(err, "Could not load the pipeline"));
       setRows([]);
     }
   }, []);
@@ -160,7 +160,7 @@ export default function TripsPage() {
         setError("Published, but no chauffeur is online within range right now.");
       }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not publish that booking");
+      setError(errorText(err, "Could not publish that booking"));
     } finally {
       setBusy(null);
     }
@@ -174,7 +174,7 @@ export default function TripsPage() {
       await load();
     } catch (err) {
       // Idempotent server-side: a second press answers 409 rather than double-charging.
-      setError(err instanceof ApiError ? err.message : "Could not collect that fare");
+      setError(errorText(err, "Could not collect that fare"));
     } finally {
       setBusy(null);
     }

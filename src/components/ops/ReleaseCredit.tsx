@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
 import { releaseTripCredit } from "@/lib/api/admin";
 import { money } from "@/components/ui/DataTable";
 
@@ -71,7 +71,7 @@ export function ReleaseCredit({
                 onReleased();
               } catch (err) {
                 setError(
-                  err instanceof ApiError ? err.message : "Could not release the credit",
+                  errorText(err, "Could not release the credit"),
                 );
               }
             })

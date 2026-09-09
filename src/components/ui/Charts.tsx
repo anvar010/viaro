@@ -310,18 +310,22 @@ export function DonutChart({
   /*
    * Offsets are precomputed rather than accumulated inside the map.
    *
-   * Mutating a variable while rendering is only safe while every segment is drawn in one
-   * uninterrupted pass. It works today, but it is exactly the pattern React Compiler
-   * memoizes per item, and a stale accumulator would draw the segments on top of each
-   * other with no error to explain it.
+   * The old version reassigned an outer `running` while rendering. That is only safe
+   * while every segment is drawn in one uninterrupted pass — exactly the pattern React
+   * Compiler memoizes per item, at which point a stale accumulator draws the segments on
+   * top of each other with no error to explain it. The reduce carries the running total
+   * in its own accumulator, so nothing outside the computation is written to.
    */
-  let running = 0;
-  const arcs = slices.map((s) => {
-    const len = (s.value / sum) * C;
-    const arc = { slice: s, len, offset: running };
-    running += len;
-    return arc;
-  });
+  const arcs = slices.reduce<{ slice: (typeof slices)[number]; len: number; offset: number }[]>(
+    (acc, s) => {
+      const len = (s.value / sum) * C;
+      const previous = acc[acc.length - 1];
+      const offset = previous ? previous.offset + previous.len : 0;
+      acc.push({ slice: s, len, offset });
+      return acc;
+    },
+    [],
+  );
 
   return (
     <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-7">

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PersonCell, StatusBadge } from "@/components/ui/Dashboard";
 import { ConsolePage, DataTable, formatDate, type Column } from "@/components/ui/DataTable";
 import { getUsersDashboard } from "@/lib/api/admin";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
 import type { User } from "@/lib/api/types";
 
 const ROLES = ["all", "customer", "driver", "admin", "company"] as const;
@@ -22,7 +22,7 @@ export default function UsersPage() {
       .then((page) => { if (!cancelled) setRows(page.items); })
       .catch((err) => {
         if (cancelled) return;
-        setError(err instanceof ApiError ? err.message : "Could not load users");
+        setError(errorText(err, "Could not load users"));
         setRows([]);
       });
     return () => { cancelled = true; };
