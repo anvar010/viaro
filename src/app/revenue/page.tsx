@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, Kicker, WarnBox } from "@/components/ui/Surfaces";
 import { ConsolePage, DataTable, money, type Column } from "@/components/ui/DataTable";
 import { getEarningsPayout, type EarningsPayoutReport } from "@/lib/api/admin";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
 
 type Row = EarningsPayoutReport["rows"][number];
 
@@ -19,7 +19,7 @@ export default function CompanyRevenuePage() {
       .then((r) => { if (!cancelled) setReport(r); })
       .catch((err) => {
         if (cancelled) return;
-        setError(err instanceof ApiError ? err.message : "Could not load revenue");
+        setError(errorText(err, "Could not load revenue"));
       });
     return () => { cancelled = true; };
   }, []);

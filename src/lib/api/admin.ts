@@ -59,12 +59,19 @@ export const listDrivers = (page = 1, limit = 100) =>
     query: { page, limit },
   });
 
-/** Company-only. */
+/**
+ * Company-only.
+ *
+ * `password` is optional because the backend supports two modes: supplying one creates a
+ * brand-new account, omitting it links an existing chauffeur to this roster by email.
+ * Typing it as required made the second mode unreachable from the only UI that manages
+ * the roster.
+ */
 export const createDriver = (input: {
   name: string;
   email: string;
   phone: string;
-  password: string;
+  password?: string;
   vehicleClass: string;
 }) => api.post<RosterDriver>("/admin/drivers", input);
 

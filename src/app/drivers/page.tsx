@@ -10,7 +10,8 @@ import {
   updateDriver,
   type RosterDriver,
 } from "@/lib/api/admin";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
+import { listVehicleClasses, type VehicleClass } from "@/lib/api/vehicles";
 
 const inputClass =
   "w-full rounded-field border border-border bg-surface-raised px-3 py-2 text-note text-fg outline-none";
@@ -34,7 +35,7 @@ export default function CompanyDriversPage() {
       setDrivers(Array.isArray(list) ? list : (list.items ?? []));
       setError(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not load your roster");
+      setError(errorText(err, "Could not load your roster"));
       setDrivers([]);
     }
   }, []);
@@ -131,7 +132,7 @@ function PayoutForm({ driver, onDone }: { driver: RosterDriver; onDone: () => vo
           setState({ saved: true });
           onDone();
         } catch (err) {
-          setState({ error: err instanceof ApiError ? err.message : "Could not save" });
+          setState({ error: errorText(err, "Could not save") });
         } finally {
           setPending(false);
         }
@@ -175,6 +176,30 @@ function PayoutForm({ driver, onDone }: { driver: RosterDriver; onDone: () => vo
 function NewDriverForm({ onDone }: { onDone: () => void }) {
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<{ error?: string; saved?: boolean }>({});
+  /**
+   * Two modes, both of which the backend has always supported: create a brand-new account
+   * (with a temporary password) or link a chauffeur who already has one. The form only
+   * ever offered the first, so the second was unreachable and attempting it by email
+   * produced a bare 409.
+   */
+  const [linkExisting, setLinkExisting] = useState(false);
+  const [classes, setClasses] = useState<VehicleClass[]>([]);
+
+  // The catalogue is operator-managed, so it is read rather than hardcoded.
+  useEffect(() => {
+    let cancelled = false;
+    listVehicleClasses()
+      .then((rows) => {
+        if (!cancelled) setClasses(rows);
+      })
+      .catch(() => {
+        // A failed lookup must not block adding a chauffeur; the field falls back below.
+        if (!cancelled) setClasses([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <form
@@ -183,18 +208,20 @@ function NewDriverForm({ onDone }: { onDone: () => void }) {
         const form = new FormData(event.currentTarget);
         setPending(true);
         try {
+          const password = String(form.get("password") ?? "");
           await createDriver({
             name: String(form.get("name")).trim(),
             email: String(form.get("email")).trim(),
             phone: String(form.get("phone")).trim(),
-            password: String(form.get("password")),
+            // Omitted entirely when linking — that is what selects the backend's link mode.
+            ...(linkExisting || !password ? {} : { password }),
             vehicleClass: String(form.get("vehicleClass")),
           });
           setState({ saved: true });
           (event.target as HTMLFormElement).reset();
           onDone();
         } catch (err) {
-          setState({ error: err instanceof ApiError ? err.message : "Could not add" });
+          setState({ error: errorText(err, "Could not add") });
         } finally {
           setPending(false);
         }
@@ -218,26 +245,53 @@ function NewDriverForm({ onDone }: { onDone: () => void }) {
         <input name="phone" type="tel" required className={`${inputClass} mt-1`} />
       </label>
 
-      <label className="block">
-        <span className="text-label font-bold text-fg-muted">Temporary password</span>
+      <label className="flex items-start gap-2">
         <input
-          name="password"
-          type="password"
-          required
-          minLength={8}
-          className={`${inputClass} mt-1`}
+          type="checkbox"
+          checked={linkExisting}
+          onChange={(event) => setLinkExisting(event.target.checked)}
+          className="mt-1"
         />
-        <span className="mt-1 block text-note text-fg-muted">
-          At least 8 characters. They can change it after signing in.
+        <span>
+          <span className="text-label font-bold text-fg-muted">
+            This chauffeur already has a Viaro account
+          </span>
+          <span className="mt-1 block text-note text-fg-muted">
+            Links their existing account to your roster by email instead of creating a new
+            one. They keep their current password.
+          </span>
         </span>
       </label>
+
+      {linkExisting ? null : (
+        <label className="block">
+          <span className="text-label font-bold text-fg-muted">Temporary password</span>
+          <input
+            name="password"
+            type="password"
+            required
+            minLength={8}
+            className={`${inputClass} mt-1`}
+          />
+          <span className="mt-1 block text-note text-fg-muted">
+            At least 8 characters. They can change it after signing in.
+          </span>
+        </label>
+      )}
 
       <label className="block">
         <span className="text-label font-bold text-fg-muted">Vehicle class</span>
         <select name="vehicleClass" defaultValue="sedan" className={`${inputClass} mt-1`}>
-          <option value="sedan">Sedan</option>
-          <option value="suv">SUV</option>
-          <option value="minibus">Minibus</option>
+          {classes.length > 0 ? (
+            classes.map((vehicleClass) => (
+              <option key={vehicleClass._id} value={vehicleClass.value}>
+                {vehicleClass.label}
+              </option>
+            ))
+          ) : (
+            /* Only until the catalogue loads — never the source of truth. */
+            <option value="sedan">Sedan</option>
+          )}
         </select>
       </label>
 

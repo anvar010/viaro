@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Card, Kicker, WarnBox } from "@/components/ui/Surfaces";
+import { Card, Kicker } from "@/components/ui/Surfaces";
 import { Button } from "@/components/ui/Button";
 import { ConsolePage, DataTable, money, formatDateTime, type Column } from "@/components/ui/DataTable";
 import {
@@ -15,7 +15,8 @@ import {
   type CancellationsReport,
   type ReportRange,
 } from "@/lib/api/admin";
-import { ApiError } from "@/lib/api/client";
+import { ApiError, downloadFile, errorText } from "@/lib/api/client";
+import { useDriverNames } from "@/lib/roster/useDriverNames";
 
 type ReportType = "trips-completed" | "earnings-payout" | "cancellations-penalties";
 
@@ -36,6 +37,8 @@ export default function ReportsPage() {
   const [earnings, setEarnings] = useState<EarningsPayoutReport | null>(null);
   const [cancels, setCancels] = useState<CancellationsReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Real chauffeur names rather than six characters of an ObjectId.
+  const { nameFor } = useDriverNames();
 
   const load = useCallback(async () => {
     setError(null);
@@ -44,7 +47,7 @@ export default function ReportsPage() {
       if (tab === "earnings-payout") setEarnings(await getEarningsPayout(range));
       if (tab === "cancellations-penalties") setCancels(await getCancellations(range));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not run that report");
+      setError(errorText(err, "Could not run that report"));
     }
   }, [tab, range]);
 
@@ -55,7 +58,7 @@ export default function ReportsPage() {
   const tripColumns: Column<TripsCompletedReport["rows"][number]>[] = [
     { key: "trip", header: "Trip", cell: (r) => r.tripId.slice(-6).toUpperCase() },
     { key: "booking", header: "Booking", cell: (r) => r.bookingId.slice(-6).toUpperCase(), secondary: true },
-    { key: "driver", header: "Driver", cell: (r) => r.driverId.slice(-6).toUpperCase(), secondary: true },
+    { key: "driver", header: "Driver", cell: (r) => nameFor(r.driverId), secondary: true },
     { key: "completed", header: "Completed", cell: (r) => formatDateTime(r.completedAt) },
     { key: "fare", header: "Fare", align: "right", cell: (r) => money(r.fareAmount) },
   ];
@@ -79,7 +82,12 @@ export default function ReportsPage() {
     <ConsolePage
       title="Reports"
       description="Scoped to your fleet. The same three reports the platform admin sees, for your drivers."
-      action={<ExportButton type={tab} range={range} />}
+      /*
+       * Keyed by report type on purpose: without it the component kept its state across a
+       * tab change, so a finished export still offered "Download the file" on the new tab
+       * — pointing at the PREVIOUS tab's job. Remounting per type discards the stale job.
+       */
+      action={<ExportButton key={tab} type={tab} range={range} />}
     >
       {error ? <p className="mb-4 text-note font-bold text-danger">{error}</p> : null}
 
@@ -205,8 +213,12 @@ function Summary({ items }: { items: [string, string][] }) {
 
 /**
  * Exports are background jobs: the request answers 202 with a job id, and the status
- * endpoint is polled until the file is ready. The download itself is a plain link to
- * the API, so the browser handles the file rather than the app buffering it.
+ * endpoint is polled until the file is ready.
+ *
+ * The download goes through `downloadFile`, which attaches the bearer token and hands the
+ * browser a blob. It used to be a plain anchor straight at the API — which a navigation
+ * cannot authenticate, so it left the console and rendered the backend's raw
+ * "Missing Authorization bearer token" JSON.
  */
 function ExportButton({ type, range }: { type: ReportType; range: ReportRange }) {
   const [state, setState] = useState<{
@@ -214,38 +226,38 @@ function ExportButton({ type, range }: { type: ReportType; range: ReportRange })
     error?: string;
     jobId?: string;
     ready?: boolean;
+    format?: "csv" | "pdf";
   }>({});
   const [pending, setPending] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const run = async (format: "csv" | "pdf") => {
     setPending(true);
     setState({ status: "Queued…" });
     try {
       const { jobId } = await requestExport(type, format, range);
-      setState({ status: "Generating…", jobId });
+      setState({ status: "Generating…", jobId, format });
 
       // Poll for a short while; a long job keeps the id so it can be fetched later.
       for (let attempt = 0; attempt < 20; attempt += 1) {
         await new Promise((resolve) => setTimeout(resolve, 1500));
         const job = await getExportStatus(jobId);
         if (job.state === "completed") {
-          setState({ status: "Ready", jobId, ready: true });
+          setState({ status: "Ready", jobId, ready: true, format });
           return;
         }
         if (job.state === "failed") {
-          setState({ error: "The export failed to generate.", jobId });
+          setState({ error: "The export failed to generate.", jobId, format });
           return;
         }
       }
-      setState({ status: "Still generating — check back shortly.", jobId });
+      setState({ status: "Still generating — check back shortly.", jobId, format });
     } catch (err) {
-      setState({ error: err instanceof ApiError ? err.message : "Could not export" });
+      setState({ error: err instanceof ApiError ? errorText(err) : "Could not export" });
     } finally {
       setPending(false);
     }
   };
-
-  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5001";
 
   return (
     <div className="flex flex-col items-end gap-2">
@@ -262,12 +274,29 @@ function ExportButton({ type, range }: { type: ReportType; range: ReportRange })
         <p className="text-label text-fg-muted">{state.status}</p>
       ) : null}
       {state.ready && state.jobId ? (
-        <a
-          href={`${base}/reports/exports/${state.jobId}/download`}
-          className="text-note font-bold text-accent hover:underline"
+        <button
+          type="button"
+          disabled={downloading}
+          onClick={async () => {
+            setDownloading(true);
+            try {
+              await downloadFile(
+                `/reports/exports/${state.jobId}/download`,
+                `viaro-${type}-${state.jobId}.${state.format ?? "csv"}`,
+              );
+            } catch (err) {
+              setState((prev) => ({
+                ...prev,
+                error: err instanceof ApiError ? errorText(err) : "Could not download the file",
+              }));
+            } finally {
+              setDownloading(false);
+            }
+          }}
+          className="text-note font-bold text-accent hover:underline disabled:opacity-60"
         >
-          Download the file
-        </a>
+          {downloading ? "Downloading…" : "Download the file"}
+        </button>
       ) : null}
     </div>
   );

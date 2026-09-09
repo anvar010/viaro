@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/Surfaces";
 import { ConsolePage, DataTable, money, formatDateTime, type Column } from "@/components/ui/DataTable";
 import { getTripsCompleted, type TripsCompletedReport } from "@/lib/api/admin";
-import { ApiError } from "@/lib/api/client";
+import { errorText } from "@/lib/api/client";
+import { useDriverNames } from "@/lib/roster/useDriverNames";
 
 type Row = TripsCompletedReport["rows"][number];
 
@@ -15,6 +15,8 @@ type Row = TripsCompletedReport["rows"][number];
 export default function CompanyTripsPage() {
   const [report, setReport] = useState<TripsCompletedReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Real chauffeur names rather than six characters of an ObjectId.
+  const { nameFor } = useDriverNames();
 
   useEffect(() => {
     let cancelled = false;
@@ -22,7 +24,7 @@ export default function CompanyTripsPage() {
       .then((r) => { if (!cancelled) setReport(r); })
       .catch((err) => {
         if (cancelled) return;
-        setError(err instanceof ApiError ? err.message : "Could not load trips");
+        setError(errorText(err, "Could not load trips"));
         setReport({ scope: "all", count: 0, rows: [] });
       });
     return () => { cancelled = true; };
@@ -31,7 +33,7 @@ export default function CompanyTripsPage() {
   const columns: Column<Row>[] = [
     { key: "trip", header: "Trip", cell: (r) => <span className="font-bold">{r.tripId.slice(-6).toUpperCase()}</span> },
     { key: "booking", header: "Booking", cell: (r) => r.bookingId.slice(-6).toUpperCase(), secondary: true },
-    { key: "driver", header: "Driver", cell: (r) => r.driverId.slice(-6).toUpperCase() },
+    { key: "driver", header: "Driver", cell: (r) => nameFor(r.driverId) },
     { key: "completed", header: "Completed", cell: (r) => formatDateTime(r.completedAt) },
     { key: "fare", header: "Fare", align: "right", cell: (r) => money(r.fareAmount) },
   ];
