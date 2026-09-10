@@ -33,6 +33,7 @@ export default function VehiclesPage() {
   const [rows, setRows] = useState<VehicleClass[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<VehicleClass | "new" | null>(null);
+  const [confirmRetire, setConfirmRetire] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -121,24 +122,48 @@ export default function VehiclesPage() {
       key: "actions",
       header: "",
       align: "right",
-      cell: (r) => (
-        <span className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => setEditing(r)}
-            className="h-8 rounded-field border border-border bg-surface-raised px-3 text-label font-bold text-fg-body transition-colors hover:border-accent hover:text-fg"
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            onClick={() => toggleActive(r)}
-            className="h-8 rounded-field border border-border bg-surface-raised px-3 text-label font-bold text-fg-body transition-colors hover:border-accent hover:text-fg"
-          >
-            {r.active ? "Retire" : "Restore"}
-          </button>
-        </span>
-      ),
+      cell: (r) =>
+        confirmRetire === r._id ? (
+          // Retiring removes the class from every booking form at once, so it gets the
+          // same second step as Delete rather than firing on a single click.
+          <span className="flex flex-wrap items-center justify-end gap-2">
+            <span className="text-label text-fg-muted">Take it off sale?</span>
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmRetire(null);
+                void toggleActive(r);
+              }}
+              className="h-8 rounded-field bg-danger px-3 text-label font-bold text-white"
+            >
+              Retire
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmRetire(null)}
+              className="h-8 rounded-field border border-border bg-surface-raised px-3 text-label font-bold text-fg-body"
+            >
+              Keep
+            </button>
+          </span>
+        ) : (
+          <span className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setEditing(r)}
+              className="h-8 rounded-field border border-border bg-surface-raised px-3 text-label font-bold text-fg-body transition-colors hover:border-accent hover:text-fg"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={() => (r.active ? setConfirmRetire(r._id) : void toggleActive(r))}
+              className="h-8 rounded-field border border-border bg-surface-raised px-3 text-label font-bold text-fg-body transition-colors hover:border-accent hover:text-fg"
+            >
+              {r.active ? "Retire…" : "Restore"}
+            </button>
+          </span>
+        ),
     },
   ];
 

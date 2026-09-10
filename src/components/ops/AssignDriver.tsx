@@ -114,7 +114,7 @@ function AssignDialog({
   }
 
   const nameOf = (driver: RosterDriver) =>
-    typeof driver.userId === "object" ? driver.userId.name : "Chauffeur";
+    driver.userId && typeof driver.userId === "object" ? driver.userId.name : "Chauffeur";
 
   return (
     <div

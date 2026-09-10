@@ -196,8 +196,11 @@ export default function TripsPage() {
     return (rows ?? []).filter((r) => stageOf(r) === filter);
   }, [rows, filter]);
 
+  // typeof null is "object": a customer whose account was deleted is populated as null.
+  const customerOf = (r: Row) =>
+    r.customerId && typeof r.customerId === "object" ? r.customerId : null;
   const customerName = (r: Row) =>
-    typeof r.customerId === "object" ? r.customerId.name : "—";
+    customerOf(r)?.name ?? (r.customerId ? "—" : "Deleted user");
 
   const columns: Column<Row>[] = [
     {
@@ -219,7 +222,7 @@ export default function TripsPage() {
       cell: (r) => (
         <PersonCell
           name={customerName(r)}
-          meta={typeof r.customerId === "object" ? r.customerId.email : undefined}
+          meta={customerOf(r)?.email}
         />
       ),
       sortValue: (r) => customerName(r),

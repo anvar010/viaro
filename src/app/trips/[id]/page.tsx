@@ -160,7 +160,8 @@ export default function BookingDetailPage({
       : undefined);
 
   const vehicle = findVehicleClass(booking.vehicleClass);
-  const customer = typeof booking.customerId === "object" ? booking.customerId : null;
+  const customer =
+    booking.customerId && typeof booking.customerId === "object" ? booking.customerId : null;
   const overCapacity =
     booking.passengers !== undefined &&
     vehicle !== undefined &&

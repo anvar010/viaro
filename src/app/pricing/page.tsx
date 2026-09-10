@@ -8,6 +8,7 @@ import {
   listPricingRules,
   createPricingRule,
   updatePricingRule,
+  deletePricingRule,
   type PricingRule,
 } from "@/lib/api/admin";
 import { errorText } from "@/lib/api/client";
@@ -72,6 +73,9 @@ export default function PricingPage() {
                     </div>
                     <div className="mt-3">
                       <RuleForm rule={rule} onDone={load} />
+                    </div>
+                    <div className="mt-3">
+                      <RemoveRule rule={rule} onDone={load} />
                     </div>
                   </li>
                 ))}
@@ -163,6 +167,61 @@ function RuleForm({ rule, onDone }: { rule: PricingRule; onDone: () => void }) {
       </Button>
       {state.saved ? <span className="text-note text-success">Saved</span> : null}
     </form>
+  );
+}
+
+function RemoveRule({ rule, onDone }: { rule: PricingRule; onDone: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!confirming) {
+    return (
+      <button
+        type="button"
+        onClick={() => setConfirming(true)}
+        className="text-note font-bold text-danger hover:underline"
+      >
+        Remove this city…
+      </button>
+    );
+  }
+
+  return (
+    <div className="rounded-field border border-danger/30 bg-danger/5 p-3.5">
+      <p className="text-note leading-relaxed text-danger">
+        Removing <span className="font-bold capitalize">{rule.city}</span> takes it off
+        sale immediately — quotes there answer 404 until a rule is added again.
+      </p>
+      {error ? <p className="mt-2 text-label text-danger">{error}</p> : null}
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={async () => {
+            setPending(true);
+            setError(null);
+            try {
+              await deletePricingRule(rule._id);
+              onDone();
+            } catch (err) {
+              setError(errorText(err, "Could not remove that city"));
+              setPending(false);
+            }
+          }}
+          className="h-9 rounded-field bg-danger px-3.5 text-label font-bold text-white disabled:opacity-50"
+        >
+          {pending ? "Removing…" : "Remove city"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirming(false)}
+          className="h-9 rounded-field border border-border bg-surface-raised px-3.5 text-label font-bold text-fg-body"
+        >
+          Keep it
+        </button>
+      </div>
+    </div>
   );
 }
 

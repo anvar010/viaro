@@ -17,7 +17,7 @@ const inputClass =
   "w-full rounded-field border border-border bg-surface-raised px-3 py-2 text-note text-fg outline-none";
 
 const nameOf = (driver: RosterDriver) =>
-  typeof driver.userId === "object" ? driver.userId.name : "Chauffeur";
+  driver.userId && typeof driver.userId === "object" ? driver.userId.name : "Chauffeur";
 
 /**
  * The platform roster and payout terms.
@@ -131,6 +131,7 @@ export default function DriversPage() {
 function PayoutForm({ driver, onDone }: { driver: RosterDriver; onDone: () => void }) {
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<{ error?: string; saved?: boolean }>({});
+  const locked = driver.managedBy === "company";
 
   return (
     <form
@@ -156,13 +157,19 @@ function PayoutForm({ driver, onDone }: { driver: RosterDriver; onDone: () => vo
       className="flex flex-wrap items-end gap-3"
     >
       {state.error ? <p className="w-full text-label text-danger">{state.error}</p> : null}
+      {locked ? (
+        <p className="w-full text-note text-fg-muted">
+          On a company roster — their terms are set in that company&apos;s fleet console.
+        </p>
+      ) : null}
 
       <label className="w-40">
         <span className="text-label font-bold text-fg-muted">Payout mode</span>
         <select
           name="mode"
+          disabled={locked}
           defaultValue={driver.payout?.mode ?? "percentage"}
-          className={`${inputClass} mt-1`}
+          className={`${inputClass} mt-1 disabled:opacity-60`}
         >
           <option value="percentage">Percentage</option>
           <option value="flat">Flat per trip</option>
@@ -176,12 +183,13 @@ function PayoutForm({ driver, onDone }: { driver: RosterDriver; onDone: () => vo
           type="number"
           step="0.01"
           min={0}
+          disabled={locked}
           defaultValue={driver.payout?.value ?? 70}
-          className={`${inputClass} mt-1`}
+          className={`${inputClass} mt-1 disabled:opacity-60`}
         />
       </label>
 
-      <Button type="submit" variant="secondary" block={false} disabled={pending}>
+      <Button type="submit" variant="secondary" block={false} disabled={pending || locked}>
         {pending ? "Saving…" : "Save terms"}
       </Button>
       {state.saved ? <span className="text-note text-success">Saved</span> : null}

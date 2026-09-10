@@ -52,6 +52,11 @@ export async function fetchAllPages<T>(
 
 export interface RosterDriver extends Omit<Driver, "userId"> {
   userId: string | { _id: string; name: string; email?: string; phone?: string };
+  /**
+   * Admin responses only. A driver on a company's roster has their terms set in that
+   * company's console — `PATCH /admin/drivers/:id` answers 403 to an admin for them.
+   */
+  managedBy?: "company" | "platform";
 }
 
 export const listDrivers = (page = 1, limit = 100) =>
@@ -133,6 +138,9 @@ export const updatePricingRule = (
   id: string,
   input: { city?: string; baseFare?: number; peakMultiplier?: number },
 ) => api.patch<PricingRule>(`/admin/pricing/city/${id}`, input);
+
+export const deletePricingRule = (id: string) =>
+  api.delete<{ deleted: boolean }>(`/admin/pricing/city/${id}`);
 
 /* --------------------------------- dispatch -------------------------------- */
 

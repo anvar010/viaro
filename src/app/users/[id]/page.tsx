@@ -66,7 +66,9 @@ function stageOf(row: Row): Stage {
 }
 
 const customerIdOf = (booking: Row) =>
-  typeof booking.customerId === "object" ? booking.customerId._id : String(booking.customerId);
+  booking.customerId && typeof booking.customerId === "object"
+    ? booking.customerId._id
+    : String(booking.customerId ?? "");
 
 export default function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);

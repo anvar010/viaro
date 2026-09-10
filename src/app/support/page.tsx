@@ -102,7 +102,7 @@ export default function SupportPage() {
                     <p className="truncate text-meta font-bold text-fg">{ticket.subject}</p>
                     <p className="mt-0.5 text-note text-fg-muted">
                       {CATEGORY_LABEL[ticket.category] ?? ticket.category}
-                      {typeof ticket.userId === "object"
+                      {ticket.userId && typeof ticket.userId === "object"
                         ? ` · ${ticket.userId.name} (${ticket.userId.role})`
                         : ""}{" "}
                       · {formatDateTime(ticket.createdAt)}
