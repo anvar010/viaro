@@ -49,3 +49,8 @@ adminPricingRouter.patch(
   validate({ params: idParamSchema, body: updatePricingRuleSchema }),
   asyncHandler(controller.updatePricingRule),
 );
+adminPricingRouter.delete(
+  '/city/:id',
+  validate({ params: idParamSchema }),
+  asyncHandler(controller.deletePricingRule),
+);

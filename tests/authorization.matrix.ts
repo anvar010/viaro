@@ -239,4 +239,5 @@ export const MATRIX: MatrixEntry[] = [
   { method: 'POST', path: '/admin/pricing/city', allowed: ['admin'] },
   { method: 'GET', path: '/admin/pricing/city', allowed: ['admin'] },
   { method: 'PATCH', path: '/admin/pricing/city/:id', allowed: ['admin'] },
+  { method: 'DELETE', path: '/admin/pricing/city/:id', allowed: ['admin'] },
 ];

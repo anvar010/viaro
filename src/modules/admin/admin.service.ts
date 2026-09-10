@@ -109,7 +109,24 @@ export async function listDrivers(user: AuthUser, q: PaginationQuery) {
     Driver.countDocuments(filter),
   ]);
 
-  return paginated(items, total, q);
+  if (user.role !== 'admin' || items.length === 0) return paginated(items, total, q);
+
+  // The admin may only set terms for drivers on no roster (see updateDriver), and the
+  // roster link lives on Company alone — so say up front who owns each one, rather than
+  // letting the console offer a form the API is going to refuse.
+  const rostered = await Company.find({ driverIds: { $in: items.map((d) => d._id) } })
+    .select('driverIds')
+    .lean();
+  const onRoster = new Set(rostered.flatMap((c) => c.driverIds.map(String)));
+
+  return paginated(
+    items.map((d) => ({
+      ...d,
+      managedBy: onRoster.has(String(d._id)) ? 'company' : 'platform',
+    })),
+    total,
+    q,
+  );
 }
 
 /**

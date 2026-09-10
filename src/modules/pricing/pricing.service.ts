@@ -188,3 +188,9 @@ export async function updatePricingRule(id: string, input: UpdatePricingRuleInpu
   if (!rule) throw ApiError.notFound('Pricing rule not found');
   return rule;
 }
+
+/** Bookings reference a city by name, not by rule id, so removing a rule orphans nothing. */
+export async function deletePricingRule(id: string): Promise<void> {
+  const rule = await PricingRule.findByIdAndDelete(id);
+  if (!rule) throw ApiError.notFound('Pricing rule not found');
+}

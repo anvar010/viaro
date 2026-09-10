@@ -62,3 +62,8 @@ export async function updatePricingRule(req: Request, res: Response): Promise<vo
   );
   res.json({ success: true, data });
 }
+
+export async function deletePricingRule(req: Request, res: Response): Promise<void> {
+  await pricingService.deletePricingRule(params<IdParam>(req).id);
+  res.json({ success: true, data: { deleted: true } });
+}

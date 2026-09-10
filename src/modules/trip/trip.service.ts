@@ -157,6 +157,13 @@ export async function acceptBooking(id: string, userId: string) {
   const driver = await Driver.findOne({ userId });
   if (!driver) throw ApiError.notFound('Driver profile not found');
 
+  // Same rule as going online (driver.service setOwnStatus): an account still awaiting
+  // document review cannot be dispatched, so it must not be able to claim from the pool.
+  const account = await User.findById(userId).select('status').lean<{ status: string }>();
+  if (account?.status === 'pending_documents') {
+    throw ApiError.forbidden('Upload your documents before accepting rides');
+  }
+
   // The spec writes this route as /trips/:id/accept and the build prompt as
   // /trips/:bookingId/accept. Both are honoured: the id is resolved as a booking first,
   // then as a Trip (which exists already when a favourite driver was pre-assigned).
