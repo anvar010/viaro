@@ -41,7 +41,14 @@ export function LoginForm() {
       <input type="hidden" name="next" value={next} />
 
       <Field label="Email" htmlFor="email" error={state?.fieldErrors?.email}>
-        <Input id="email" name="email" type="email" autoComplete="email" required />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          defaultValue={state?.values?.email}
+          required
+        />
       </Field>
 
       <Field label="Password" htmlFor="password" error={state?.fieldErrors?.password}>
@@ -81,11 +88,25 @@ export function RegisterForm() {
       {state?.error ? <ErrorNote>{state.error}</ErrorNote> : null}
 
       <Field label="Full name" htmlFor="name" error={state?.fieldErrors?.name}>
-        <Input id="name" name="name" autoComplete="name" required minLength={2} />
+        <Input
+          id="name"
+          name="name"
+          autoComplete="name"
+          defaultValue={state?.values?.name}
+          required
+          minLength={2}
+        />
       </Field>
 
       <Field label="Email" htmlFor="email" error={state?.fieldErrors?.email}>
-        <Input id="email" name="email" type="email" autoComplete="email" required />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          defaultValue={state?.values?.email}
+          required
+        />
       </Field>
 
       <Field
@@ -94,7 +115,14 @@ export function RegisterForm() {
         error={state?.fieldErrors?.phone}
         hint="Include the country code, e.g. +1 206 555 0148"
       >
-        <Input id="phone" name="phone" type="tel" autoComplete="tel" required />
+        <Input
+          id="phone"
+          name="phone"
+          type="tel"
+          autoComplete="tel"
+          defaultValue={state?.values?.phone}
+          required
+        />
       </Field>
 
       <Field

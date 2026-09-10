@@ -16,6 +16,11 @@ import type { AuthResult, UserRole } from "@/lib/api/types";
 export interface FormState {
   error?: string;
   fieldErrors?: Record<string, string>;
+  /**
+   * What was submitted, echoed back on failure. React resets an uncontrolled form once
+   * its action settles, so without this a wrong password also wiped the email field.
+   */
+  values?: Record<string, string>;
 }
 
 /**
@@ -48,7 +53,7 @@ export async function loginAction(
       anonymous: true,
     });
   } catch (err) {
-    return toFormState(err);
+    return { ...toFormState(err), values: { email } };
   }
 
   await writeSession({
@@ -83,7 +88,10 @@ export async function registerAction(
       anonymous: true,
     });
   } catch (err) {
-    return toFormState(err);
+    return {
+      ...toFormState(err),
+      values: { name: String(body.name), email: String(body.email), phone: String(body.phone) },
+    };
   }
 
   await writeSession({

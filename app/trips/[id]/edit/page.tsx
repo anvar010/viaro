@@ -96,12 +96,21 @@ export default async function EditBookingPage({
 
             <Panel>
               <SectionTitle>Need to cancel?</SectionTitle>
+              {/* Same policy wording as the trip page, which owns the actual Cancel
+                  control — this used to say cancellations went through the team. */}
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                Cancellations are handled by our team so we can confirm the refund with
-                you before anything is charged.
+                Cancel from the trip page. Free outside the{" "}
+                {booking.tripType === "hourly" ? "72" : "24"} h window; if a fare has
+                already been charged, 90% of it comes back as wallet credit. Inside the
+                window the fare is retained.
               </p>
               <div className="mt-4">
-                <ContactToCancel reason="cancel" />
+                <Button asChild variant="outline">
+                  <Link href={`/trips/${id}`}>Go to the trip</Link>
+                </Button>
+              </div>
+              <div className="mt-4 border-t border-border pt-4">
+                <ContactToCancel reason="cancel" variant="inline" />
               </div>
             </Panel>
           </>

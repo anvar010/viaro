@@ -12,14 +12,35 @@ import type { Booking } from "@/lib/api/types";
 const selectClass =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
-/** Splits the stored ISO timestamp into the date and time inputs. */
+/**
+ * Splits the stored timestamp into the date and time inputs — in Pacific time.
+ *
+ * The form submits a zone-less wall-clock string that the API reads as
+ * America/Los_Angeles, so the pre-filled values must be in that zone too. Local-time
+ * getters reflect wherever the page happens to render; from anywhere east of UTC an
+ * evening Pacific pickup pre-filled as the next calendar day, and saving made it real.
+ */
+const APP_TIMEZONE = "America/Los_Angeles";
+
 function splitSchedule(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return { date: "", time: "" };
-  const pad = (n: number) => String(n).padStart(2, "0");
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: APP_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+
   return {
-    date: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
-    time: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
+    date: `${part("year")}-${part("month")}-${part("day")}`,
+    time: `${part("hour")}:${part("minute")}`,
   };
 }
 
@@ -67,7 +88,7 @@ export function EditBookingForm({ booking }: { booking: Booking }) {
         <Field label="Date" htmlFor="date">
           <Input id="date" name="date" type="date" defaultValue={when.date} />
         </Field>
-        <Field label="Time" htmlFor="time">
+        <Field label="Time" htmlFor="time" hint="Pacific time.">
           <Input id="time" name="time" type="time" defaultValue={when.time} />
         </Field>
       </div>

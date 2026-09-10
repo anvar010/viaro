@@ -511,8 +511,10 @@ export default async function TripDetailPage({
             <Panel>
               <SectionTitle>Cancel</SectionTitle>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Free outside the {booking.tripType === "hourly" ? "72" : "24"} h window —
-                you get 90% back as wallet credit. Inside it, the fare is retained.
+                Free outside the {booking.tripType === "hourly" ? "72" : "24"} h window. If
+                a fare has already been charged, 90% of it comes back as wallet credit —
+                otherwise there is nothing to refund. Inside the window the fare is
+                retained.
               </p>
               {/* One action, then the way out as a sentence. The contact route used to be
                   two more full-width buttons under this one, which made a panel with a
