@@ -80,7 +80,7 @@ const since = (days: number) => {
 const todayRange = () => ({ from: iso(new Date()) });
 
 const driverName = (driver?: RosterDriver) =>
-  driver && typeof driver.userId === "object" ? driver.userId.name : "Chauffeur";
+  driver?.userId && typeof driver.userId === "object" ? driver.userId.name : "Chauffeur";
 
 interface Performance {
   driverId: string;

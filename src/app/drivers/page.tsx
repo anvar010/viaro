@@ -17,7 +17,7 @@ const inputClass =
   "w-full rounded-field border border-border bg-surface-raised px-3 py-2 text-note text-fg outline-none";
 
 const nameOf = (driver: RosterDriver) =>
-  typeof driver.userId === "object" ? driver.userId.name : "Chauffeur";
+  driver.userId && typeof driver.userId === "object" ? driver.userId.name : "Chauffeur";
 
 /**
  * The roster.

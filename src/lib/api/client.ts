@@ -90,18 +90,35 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return payload.data;
 }
 
-/** Asks our own route handler to mint a new access token from the httpOnly cookie. */
-export async function refreshSession(): Promise<boolean> {
-  try {
-    const res = await fetch("/api/auth/refresh", { method: "POST" });
-    if (!res.ok) return false;
-    const data = (await res.json()) as { accessToken?: string };
-    if (!data.accessToken) return false;
-    setAccessToken(data.accessToken);
-    return true;
-  } catch {
-    return false;
-  }
+/**
+ * Asks our own route handler to mint a new access token from the httpOnly cookie.
+ *
+ * Concurrent callers share one in-flight request. A refresh token can be spent exactly
+ * once — the backend rotates it and treats a second use as a stolen token, ending every
+ * session — so two refreshes racing at mount (the provider's restore plus a 401 retry, or
+ * StrictMode's double effect) must not each present the same token.
+ */
+let refreshInFlight: Promise<boolean> | null = null;
+
+export function refreshSession(): Promise<boolean> {
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    try {
+      const res = await fetch("/api/auth/refresh", { method: "POST" });
+      if (!res.ok) return false;
+      const data = (await res.json()) as { accessToken?: string };
+      if (!data.accessToken) return false;
+      setAccessToken(data.accessToken);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
 }
 
 /**

@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/api/client";
-import { REFRESH_COOKIE, clearRefreshCookie } from "@/lib/auth/cookies";
+import { REFRESH_COOKIE, clearRefreshCookie, refreshCookieOptions } from "@/lib/auth/cookies";
 
 /** Exchanges the httpOnly refresh cookie for a fresh access token. */
 export async function POST() {
@@ -32,8 +32,13 @@ export async function POST() {
     return response;
   }
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     accessToken: payload.data.accessToken,
     role: payload.data.role,
   });
+  // The backend rotates the refresh token on every use and treats a replay of the old
+  // one as theft, revoking every session. Keeping the spent token in the cookie made
+  // the very next refresh look like exactly that.
+  response.cookies.set(REFRESH_COOKIE, payload.data.refreshToken, refreshCookieOptions());
+  return response;
 }
