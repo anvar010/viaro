@@ -121,7 +121,12 @@ export default function ApplyPage() {
         <Card className="p-5">
           <Kicker>Apply or update</Kicker>
           <div className="mt-4">
-            <ApplyForm onDone={load} onError={setError} />
+            <ApplyForm
+              classes={classes}
+              current={profile?.driver.vehicleClass}
+              onDone={load}
+              onError={setError}
+            />
           </div>
         </Card>
       </div>
@@ -130,14 +135,23 @@ export default function ApplyPage() {
 }
 
 function ApplyForm({
+  classes,
+  current,
   onDone,
   onError,
 }: {
+  classes: VehicleClassInfo[];
+  /** The class on the driver's profile — pre-selected so a re-apply does not silently change it. */
+  current?: string;
   onDone: () => void;
   onError: (message: string | null) => void;
 }) {
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(false);
+  const [chosen, setChosen] = useState("");
+
+  const options = classes.length > 0 ? classes : current ? [{ value: current, label: current }] : [];
+  const selected = chosen || current || options[0]?.value || "";
 
   return (
     <form
@@ -165,10 +179,18 @@ function ApplyForm({
     >
       <label className="block">
         <span className="text-label font-bold text-fg-muted">Vehicle class</span>
-        <select name="vehicleClass" defaultValue="sedan" className={`${inputClass} mt-1`}>
-          <option value="sedan">Sedan</option>
-          <option value="suv">SUV</option>
-          <option value="minibus">Minibus</option>
+        {/* The catalogue is owned by operations; a hardcoded list showed 3 of its 6 classes. */}
+        <select
+          name="vehicleClass"
+          value={selected}
+          onChange={(event) => setChosen(event.target.value)}
+          className={`${inputClass} mt-1`}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
       </label>
 

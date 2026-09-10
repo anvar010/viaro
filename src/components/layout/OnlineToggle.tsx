@@ -14,6 +14,7 @@ import type { Driver } from "@/lib/api/types";
  */
 export function OnlineToggle() {
   const [driver, setDriver] = useState<Driver | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +25,10 @@ export function OnlineToggle() {
       .then((result) => {
         if (!cancelled) setDriver(result.driver);
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setLoaded(true);
+      });
 
     return () => {
       cancelled = true;
@@ -33,6 +37,16 @@ export function OnlineToggle() {
 
   const busy = driver?.status === "busy";
   const online = driver?.status === "available";
+
+  // Until the status is known the switch would show "Offline" as if it were a fact.
+  if (!loaded) {
+    return (
+      <span
+        aria-label="Checking availability"
+        className="inline-flex h-9 w-[154px] animate-pulse rounded-full bg-surface"
+      />
+    );
+  }
 
   async function choose(next: "available" | "offline") {
     if (busy || saving || !driver) return;

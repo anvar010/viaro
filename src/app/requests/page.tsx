@@ -12,6 +12,7 @@ import {
 } from "@/lib/api/driver";
 import { refreshNavBadges } from "@/lib/nav/useNavBadges";
 import { useLiveChanges } from "@/lib/live/useLiveChanges";
+import { useAuth } from "@/lib/auth/AuthProvider";
 
 /**
  * The open pool.
@@ -66,6 +67,11 @@ const dayOf = (iso?: string) =>
     : "";
 
 export default function RequestsPage() {
+  const { user } = useAuth();
+  // The API refuses an accept from an account still awaiting document review (the same
+  // rule that blocks going online), so the pool is not shown to one at all.
+  const awaitingReview = user?.status === "pending_documents";
+
   const [entries, setEntries] = useState<PoolEntry[] | null>(null);
   const [classes, setClasses] = useState<VehicleClassInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -101,12 +107,13 @@ export default function RequestsPage() {
   }, []);
 
   useEffect(() => {
+    if (awaitingReview) return;
     let cancelled = false;
     void load(() => !cancelled);
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, [load, awaitingReview]);
 
   /*
    * The pool used to be re-read on a fixed 15 s timer, which meant an offer could sit
@@ -115,7 +122,9 @@ export default function RequestsPage() {
    * back to polling by itself if the connection will not hold, so this is never slower
    * than the timer it replaces.
    */
-  useLiveChanges(["dispatch", "booking", "trip"], () => void load());
+  useLiveChanges(["dispatch", "booking", "trip"], () => {
+    if (!awaitingReview) void load();
+  });
 
   useEffect(() => {
     // Labels are a nicety; a failure leaves the raw key rather than blanking the page.
@@ -163,6 +172,27 @@ export default function RequestsPage() {
     } finally {
       setBusy(null);
     }
+  }
+
+  if (awaitingReview) {
+    return (
+      <div className="mx-auto max-w-[900px]">
+        <h1 className="text-[1.5rem] font-bold tracking-tight text-fg">Open requests</h1>
+        <div className="mt-5 rounded-card border border-border bg-surface-raised p-10 text-center">
+          <p className="text-card font-bold text-fg">Your account is awaiting document review</p>
+          <p className="mx-auto mt-2 max-w-sm text-note leading-relaxed text-fg-muted">
+            Rides can be accepted once your licence and insurance have been reviewed —
+            the same rule that keeps you from going online until then.
+          </p>
+          <Link
+            href="/documents"
+            className="mt-5 inline-flex h-10 items-center rounded-field bg-primary px-5 text-meta font-bold text-primary-fg"
+          >
+            Manage documents
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
